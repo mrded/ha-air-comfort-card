@@ -127,27 +127,42 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     return css`
       :host {
         display: block;
-        padding: 16px;
       }
 
       .card-content {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        padding: 24px;
+        background: var(--ha-card-background, var(--card-background-color, #1a1a1a));
+        border-radius: 12px;
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 24px;
       }
 
       .card-title {
         font-size: 1.5em;
+        font-weight: 400;
+        color: var(--primary-text-color, #ffffff);
+      }
+
+      .status-badge {
+        font-size: 1.2em;
         font-weight: 500;
-        margin-bottom: 16px;
-        color: var(--primary-text-color);
+        color: var(--primary-text-color, #ffffff);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
 
       .comfort-dial-container {
         position: relative;
-        width: 240px;
-        height: 240px;
-        margin: 20px 0;
+        width: 300px;
+        height: 300px;
+        margin: 0 auto 32px;
       }
 
       .comfort-dial {
@@ -155,76 +170,84 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         height: 100%;
         border-radius: 50%;
         position: relative;
-        background: conic-gradient(
-          from 0deg,
-          var(--success-color, #4caf50) 0deg,
-          var(--success-color, #4caf50) 72deg,
-          var(--warning-color, #ff9800) 72deg,
-          var(--warning-color, #ff9800) 144deg,
-          var(--error-color, #f44336) 144deg,
-          var(--error-color, #f44336) 216deg,
-          var(--info-color, #2196f3) 216deg,
-          var(--info-color, #2196f3) 288deg,
-          var(--success-color, #4caf50) 288deg,
-          var(--success-color, #4caf50) 360deg
-        );
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
-      .comfort-dial::before {
-        content: '';
+      .dial-ring {
         position: absolute;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.3);
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 80%;
-        height: 80%;
-        border-radius: 50%;
-        background: var(--card-background-color, #fff);
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       .dial-center {
         position: absolute;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        text-align: center;
-        z-index: 2;
+        z-index: 1;
       }
 
       .comfort-indicator {
         position: absolute;
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
-        background: var(--primary-color, #03a9f4);
-        border: 3px solid var(--card-background-color, #fff);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
         top: 50%;
         left: 50%;
         z-index: 3;
         transition: transform 0.5s ease;
       }
 
-      .comfort-level {
-        font-size: 1.2em;
+      .dial-label {
+        position: absolute;
+        font-size: 0.9em;
         font-weight: 500;
-        margin-bottom: 8px;
-        color: var(--primary-text-color);
+        color: var(--primary-text-color, #ffffff);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
 
-      .comfort-description {
-        font-size: 0.9em;
-        color: var(--secondary-text-color);
-        margin-bottom: 4px;
+      .label-top {
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .label-right {
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .label-bottom {
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .label-left {
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
       }
 
       .readings {
         display: flex;
-        justify-content: center;
-        gap: 24px;
-        margin-top: 16px;
+        justify-content: space-around;
+        gap: 48px;
       }
 
       .reading {
@@ -234,37 +257,30 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       }
 
       .reading-label {
-        font-size: 0.8em;
-        color: var(--secondary-text-color);
-        margin-bottom: 4px;
+        font-size: 0.75em;
+        color: var(--secondary-text-color, rgba(255, 255, 255, 0.6));
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
       }
 
       .reading-value {
-        font-size: 1.5em;
-        font-weight: 500;
-        color: var(--primary-text-color);
+        font-size: 2.5em;
+        font-weight: 300;
+        color: var(--primary-text-color, #ffffff);
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
       .reading-unit {
-        font-size: 0.8em;
-        color: var(--secondary-text-color);
-        margin-left: 2px;
+        font-size: 0.6em;
+        color: var(--secondary-text-color, rgba(255, 255, 255, 0.6));
       }
 
-      .comfortable {
-        color: var(--success-color, #4caf50);
-      }
-
-      .acceptable {
-        color: var(--info-color, #2196f3);
-      }
-
-      .uncomfortable {
+      .warning-icon {
+        font-size: 0.5em;
         color: var(--warning-color, #ff9800);
-      }
-
-      .very-uncomfortable {
-        color: var(--error-color, #f44336);
       }
     `;
   }
@@ -279,12 +295,12 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 
     if (!tempState || !humidityState) {
       return html`
-        <ha-card>
-          <div class="card-content">
+        <div class="card-content">
+          <div class="card-header">
             <div class="card-title">Air Comfort</div>
-            <div>Entity not found</div>
           </div>
-        </ha-card>
+          <div>Entity not found</div>
+        </div>
       `;
     }
 
@@ -295,63 +311,78 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 
     if (isNaN(temperature) || isNaN(humidity)) {
       return html`
-        <ha-card>
-          <div class="card-content">
+        <div class="card-content">
+          <div class="card-header">
             <div class="card-title">Air Comfort</div>
-            <div>Invalid sensor values</div>
           </div>
-        </ha-card>
+          <div>Invalid sensor values</div>
+        </div>
       `;
     }
 
     const { angle, comfort, description } = calculateComfortZone(temperature, humidity);
     
-    // Calculate indicator position on the dial
-    // Position on outer edge of the inner circle
-    const radius = 96; // 80% of 120px (half of 240px)
-    const indicatorAngle = (angle - 90) * (Math.PI / 180); // Convert to radians and adjust for top start
+    // Calculate indicator position on the dial ring
+    const radius = 80; // Position on the ring edge
+    const indicatorAngle = (angle - 90) * (Math.PI / 180);
     const indicatorX = radius * Math.cos(indicatorAngle);
     const indicatorY = radius * Math.sin(indicatorAngle);
 
+    // Determine status text based on comfort level
+    let statusText = 'COMFORTABLE';
+    if (temperature < 20) {
+      statusText = 'COLD';
+    } else if (temperature > 24) {
+      statusText = 'WARM';
+    } else if (humidity < 40) {
+      statusText = 'DRY';
+    } else if (humidity > 60) {
+      statusText = 'HUMID';
+    }
+
+    // Show warning icon if not comfortable
+    const showWarning = statusText !== 'COMFORTABLE';
+
     return html`
-      <ha-card>
-        <div class="card-content">
-          ${this.config.name ? html`<div class="card-title">${this.config.name}</div>` : ''}
-          
-          <div class="comfort-dial-container">
-            <div class="comfort-dial"></div>
-            <div class="dial-center">
-              ${this.config.show_comfort_level !== false ? html`
-                <div class="comfort-level ${comfort}">${description}</div>
-              ` : ''}
-            </div>
+      <div class="card-content">
+        <div class="card-header">
+          <div class="card-title">${this.config.name || 'Air Comfort'}</div>
+          <div class="status-badge">${statusText}</div>
+        </div>
+        
+        <div class="comfort-dial-container">
+          <div class="comfort-dial">
+            <div class="dial-ring"></div>
+            <div class="dial-center"></div>
             <div 
               class="comfort-indicator"
               style="transform: translate(-50%, -50%) translate(${indicatorX}px, ${indicatorY}px);"
             ></div>
-          </div>
-
-          <div class="readings">
-            ${this.config.show_temperature !== false ? html`
-              <div class="reading">
-                <div class="reading-label">Temperature</div>
-                <div class="reading-value">
-                  ${temperature.toFixed(1)}<span class="reading-unit">${tempUnit}</span>
-                </div>
-              </div>
-            ` : ''}
             
-            ${this.config.show_humidity !== false ? html`
-              <div class="reading">
-                <div class="reading-label">Humidity</div>
-                <div class="reading-value">
-                  ${humidity.toFixed(0)}<span class="reading-unit">${humidityUnit}</span>
-                </div>
-              </div>
-            ` : ''}
+            <div class="dial-label label-top">TOO WARM</div>
+            <div class="dial-label label-right">HUMID</div>
+            <div class="dial-label label-bottom">COLD</div>
+            <div class="dial-label label-left">DRY</div>
           </div>
         </div>
-      </ha-card>
+
+        <div class="readings">
+          <div class="reading">
+            <div class="reading-label">Temperature</div>
+            <div class="reading-value">
+              ${showWarning ? html`<span class="warning-icon">⚠</span>` : ''}
+              ${temperature.toFixed(1)}<span class="reading-unit">${tempUnit}</span>
+            </div>
+          </div>
+          
+          <div class="reading">
+            <div class="reading-label">Humidity</div>
+            <div class="reading-value">
+              ${humidity.toFixed(0)}<span class="reading-unit">${humidityUnit}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     `;
   }
 }
