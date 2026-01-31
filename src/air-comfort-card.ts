@@ -361,7 +361,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 (window as any).customCards.push({
   type: 'air-comfort-card',
   name: 'Air Comfort Card',
-  description: 'A card that visualises indoor air comfort using temperature and humidity',
+  description: 'A card that visualizes indoor air comfort using temperature and humidity',
   preview: false,
   documentationURL: 'https://github.com/mrded/ha-air-comfort-card'
 });
