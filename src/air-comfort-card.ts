@@ -220,16 +220,21 @@ export class AirComfortCardEditor extends LitElement {
     const target = ev.target as HTMLInputElement;
     const id = target.id;
 
-    let value: string | boolean;
+    let value: string | boolean | undefined;
     if (target.type === 'checkbox') {
       value = target.checked;
     } else {
+      // For text inputs, only set to undefined if empty AND it's a required field
+      // Allow empty strings for optional fields like 'name'
       value = target.value;
+      if (value === '' && (id === 'temperature_entity' || id === 'humidity_entity')) {
+        value = undefined;
+      }
     }
 
     this.config = {
       ...this.config,
-      [id]: value || undefined
+      [id]: value
     };
 
     const event = new CustomEvent('config-changed', {
@@ -257,7 +262,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     };
   }
 
-  public static async getConfigElement(): Promise<HTMLElement> {
+  public static getConfigElement(): HTMLElement {
     return document.createElement('air-comfort-card-editor');
   }
 
