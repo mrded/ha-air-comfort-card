@@ -10,11 +10,22 @@ A custom Home Assistant card that visualizes indoor air comfort using temperatur
 - **Moving Indicator**: Dynamic dot that shows current conditions on the dial
 - **Temperature & Humidity Display**: Clear readings with customizable units
 - **Theme-Aware**: Automatically adapts to your Home Assistant theme
-- **Configurable**: Customize visibility of different elements via YAML
+- **Visual Editor**: Easy configuration through the Home Assistant UI
+- **Configurable**: Customize card title and visibility of different elements
 
 ## Configuration
 
-### Basic Example
+You can configure the card using the **visual editor** (recommended) or manually via YAML.
+
+### Using Visual Editor
+
+1. Add a new card to your dashboard
+2. Search for "Air Comfort Card"
+3. Select your temperature and humidity sensors
+4. Customize the card title (default: "Air Comfort") and display options
+5. Save the card
+
+### Basic Example (YAML)
 
 ```yaml
 type: custom:air-comfort-card
@@ -22,7 +33,7 @@ temperature_entity: sensor.living_room_temperature
 humidity_entity: sensor.living_room_humidity
 ```
 
-### Full Example
+### Full Example (YAML)
 
 ```yaml
 type: custom:air-comfort-card
@@ -33,6 +44,8 @@ show_temperature: true
 show_humidity: true
 show_comfort_level: true
 ```
+
+**Note**: The card title (`name`) can now be easily edited through the visual editor in the Home Assistant UI.
 
 ## How It Works
 

@@ -48,7 +48,17 @@ lovelace:
 
 ## Configuration
 
-### Basic Configuration
+The card can be configured either through the **visual editor** (recommended) or manually via YAML.
+
+### Visual Editor
+
+1. Add a new card to your dashboard
+2. Search for "Air Comfort Card"
+3. Select your temperature and humidity sensors
+4. Customize the card title and display options
+5. Save the card
+
+### Basic Configuration (YAML)
 
 ```yaml
 type: custom:air-comfort-card
@@ -56,7 +66,7 @@ temperature_entity: sensor.living_room_temperature
 humidity_entity: sensor.living_room_humidity
 ```
 
-### Full Configuration
+### Full Configuration (YAML)
 
 ```yaml
 type: custom:air-comfort-card
@@ -75,7 +85,7 @@ show_comfort_level: true
 | `type` | string | **Yes** | - | Must be `custom:air-comfort-card` |
 | `temperature_entity` | string | **Yes** | - | Entity ID of your temperature sensor |
 | `humidity_entity` | string | **Yes** | - | Entity ID of your humidity sensor |
-| `name` | string | No | - | Custom name for the card |
+| `name` | string | No | `Air Comfort` | Custom title for the card (editable via visual editor) |
 | `show_temperature` | boolean | No | `true` | Show/hide temperature reading |
 | `show_humidity` | boolean | No | `true` | Show/hide humidity reading |
 | `show_comfort_level` | boolean | No | `true` | Show/hide comfort level text |
