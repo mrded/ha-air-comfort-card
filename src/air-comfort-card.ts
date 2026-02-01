@@ -183,7 +183,7 @@ export class AirComfortCardEditor extends LitElement {
           >
             <option value="">Select an entity...</option>
             ${sensorEntities.map(entity => html`
-              <option value=${entity} ?selected=${entity === config.temperature_entity}>
+              <option value=${entity}>
                 ${entity}
               </option>
             `)}
@@ -199,7 +199,7 @@ export class AirComfortCardEditor extends LitElement {
           >
             <option value="">Select an entity...</option>
             ${sensorEntities.map(entity => html`
-              <option value=${entity} ?selected=${entity === config.humidity_entity}>
+              <option value=${entity}>
                 ${entity}
               </option>
             `)}
@@ -246,6 +246,7 @@ export class AirComfortCardEditor extends LitElement {
 
     const target = ev.target as HTMLInputElement | HTMLSelectElement;
     const id = target.id;
+    const entityFields = new Set(['temperature_entity', 'humidity_entity']);
 
     let value: string | boolean | undefined;
     if (target.type === 'checkbox') {
@@ -253,14 +254,14 @@ export class AirComfortCardEditor extends LitElement {
     } else if (target instanceof HTMLSelectElement) {
       // For select elements
       value = target.value;
-      if (value === '' && (id === 'temperature_entity' || id === 'humidity_entity')) {
+      if (value === '' && entityFields.has(id)) {
         value = undefined;
       }
     } else {
       // For text inputs, only set to undefined if empty AND it's a required field
       // Allow empty strings for optional fields like 'name'
       value = target.value;
-      if (value === '' && (id === 'temperature_entity' || id === 'humidity_entity')) {
+      if (value === '' && entityFields.has(id)) {
         value = undefined;
       }
     }
