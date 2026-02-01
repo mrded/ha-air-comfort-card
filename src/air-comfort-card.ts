@@ -233,7 +233,6 @@ export class AirComfortCardEditor extends LitElement {
       }
 
       const value = ev.detail.value;
-      
       this.config = {
         ...this.config,
         [field]: value || undefined
