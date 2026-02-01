@@ -88,6 +88,159 @@ function calculateComfortZone(temp: number, humidity: number): {
   return { angle, comfort, description };
 }
 
+@customElement('air-comfort-card-editor')
+export class AirComfortCardEditor extends LitElement {
+  @property({ attribute: false }) public hass?: HomeAssistant;
+  @state() private config?: CardConfig;
+
+  public setConfig(config: CardConfig): void {
+    this.config = config;
+  }
+
+  static get styles() {
+    return css`
+      .card-config {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .option {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      label {
+        font-weight: 500;
+        color: var(--primary-text-color);
+      }
+
+      input,
+      select {
+        padding: 8px;
+        border: 1px solid var(--divider-color);
+        border-radius: 4px;
+        background: var(--card-background-color);
+        color: var(--primary-text-color);
+        font-size: 14px;
+      }
+
+      input[type="checkbox"] {
+        width: auto;
+        margin-left: 0;
+      }
+
+      .checkbox-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    `;
+  }
+
+  protected render() {
+    if (!this.config) {
+      return html``;
+    }
+
+    return html`
+      <div class="card-config">
+        <div class="option">
+          <label for="name">Card Title</label>
+          <input
+            id="name"
+            type="text"
+            .value=${this.config.name || ''}
+            placeholder="Air Comfort"
+            @input=${this._valueChanged}
+          />
+        </div>
+
+        <div class="option">
+          <label for="temperature_entity">Temperature Entity</label>
+          <input
+            id="temperature_entity"
+            type="text"
+            .value=${this.config.temperature_entity || ''}
+            placeholder="sensor.temperature"
+            @input=${this._valueChanged}
+          />
+        </div>
+
+        <div class="option">
+          <label for="humidity_entity">Humidity Entity</label>
+          <input
+            id="humidity_entity"
+            type="text"
+            .value=${this.config.humidity_entity || ''}
+            placeholder="sensor.humidity"
+            @input=${this._valueChanged}
+          />
+        </div>
+
+        <div class="checkbox-option">
+          <input
+            id="show_temperature"
+            type="checkbox"
+            .checked=${this.config.show_temperature !== false}
+            @change=${this._valueChanged}
+          />
+          <label for="show_temperature">Show Temperature</label>
+        </div>
+
+        <div class="checkbox-option">
+          <input
+            id="show_humidity"
+            type="checkbox"
+            .checked=${this.config.show_humidity !== false}
+            @change=${this._valueChanged}
+          />
+          <label for="show_humidity">Show Humidity</label>
+        </div>
+
+        <div class="checkbox-option">
+          <input
+            id="show_comfort_level"
+            type="checkbox"
+            .checked=${this.config.show_comfort_level !== false}
+            @change=${this._valueChanged}
+          />
+          <label for="show_comfort_level">Show Comfort Level</label>
+        </div>
+      </div>
+    `;
+  }
+
+  private _valueChanged(ev: Event): void {
+    if (!this.config) {
+      return;
+    }
+
+    const target = ev.target as HTMLInputElement;
+    const id = target.id;
+
+    let value: string | boolean;
+    if (target.type === 'checkbox') {
+      value = target.checked;
+    } else {
+      value = target.value;
+    }
+
+    this.config = {
+      ...this.config,
+      [id]: value || undefined
+    };
+
+    const event = new CustomEvent('config-changed', {
+      detail: { config: this.config },
+      bubbles: true,
+      composed: true
+    });
+    this.dispatchEvent(event);
+  }
+}
+
 @customElement('air-comfort-card')
 export class AirComfortCard extends LitElement implements LovelaceCard {
   @property({ attribute: false }) public hass?: HomeAssistant;
@@ -102,6 +255,10 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       show_humidity: true,
       show_comfort_level: true
     };
+  }
+
+  public static async getConfigElement(): Promise<HTMLElement> {
+    return document.createElement('air-comfort-card-editor');
   }
 
   public setConfig(config: CardConfig): void {
@@ -400,5 +557,6 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 declare global {
   interface HTMLElementTagNameMap {
     'air-comfort-card': AirComfortCard;
+    'air-comfort-card-editor': AirComfortCardEditor;
   }
 }
