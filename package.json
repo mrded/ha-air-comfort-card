@@ -1,0 +1,41 @@
+{
+  "name": "ha-air-comfort-card",
+  "version": "1.0.0",
+  "description": "A custom Home Assistant card that visualises indoor air comfort using temperature and humidity",
+  "main": "dist/air-comfort-card.js",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
+    "lint": "eslint src --ext .ts"
+  },
+  "keywords": [
+    "home-assistant",
+    "homeassistant",
+    "hacs",
+    "lovelace",
+    "custom-card",
+    "air-comfort",
+    "temperature",
+    "humidity"
+  ],
+  "author": "Dmitry Demenchuk",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrded/ha-air-comfort-card.git"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-terser": "^0.4.0",
+    "@rollup/plugin-typescript": "^11.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.48.0",
+    "@typescript-eslint/parser": "^5.48.0",
+    "eslint": "^8.31.0",
+    "rollup": "^3.10.0",
+    "tslib": "^2.4.1",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "lit": "^2.6.1"
+  }
+}
