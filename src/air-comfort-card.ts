@@ -106,92 +106,6 @@ export class AirComfortCardEditor extends LitElement {
     return Object.keys(this.hass.states).sort();
   }
 
-  private _getSensorEntities(): string[] {
-    // Filter to only show sensor entities
-    return this._getEntities().filter(entityId => entityId.startsWith('sensor.'));
-  }
-
-  private _getTemperatureEntities(): string[] {
-    if (!this.hass) {
-      return [];
-    }
-    
-    // Filter entities that are likely temperature sensors
-    return this._getSensorEntities().filter(entityId => {
-      const state = this.hass!.states[entityId];
-      if (!state) return false;
-      
-      const attributes = state.attributes;
-      const deviceClass = attributes.device_class;
-      const unit = attributes.unit_of_measurement;
-      
-      // Check device class first (most reliable)
-      if (deviceClass === 'temperature') {
-        return true;
-      }
-      
-      // Check unit of measurement for temperature units
-      if (unit && (unit === '°C' || unit === '°F' || unit === 'K')) {
-        return true;
-      }
-      
-      // Check entity ID contains temperature-related keywords
-      const lowerEntityId = entityId.toLowerCase();
-      if (lowerEntityId.includes('temperature') || lowerEntityId.includes('temp')) {
-        return true;
-      }
-      
-      return false;
-    });
-  }
-
-  private _getHumidityEntities(): string[] {
-    if (!this.hass) {
-      return [];
-    }
-    
-    // Filter entities that are likely humidity sensors
-    return this._getSensorEntities().filter(entityId => {
-      const state = this.hass!.states[entityId];
-      if (!state) return false;
-      
-      const attributes = state.attributes;
-      const deviceClass = attributes.device_class;
-      const unit = attributes.unit_of_measurement;
-      const lowerEntityId = entityId.toLowerCase();
-      
-      // Check device class first (most reliable)
-      if (deviceClass === 'humidity') {
-        return true;
-      }
-      
-      // Check unit of measurement for humidity unit
-      if (unit === '%') {
-        // Additional check: make sure it's likely humidity, not battery or other percentage
-        if (lowerEntityId.includes('humidity') || lowerEntityId.includes('humid')) {
-          return true;
-        }
-      }
-      
-      // Check entity ID contains humidity-related keywords
-      if (lowerEntityId.includes('humidity') || lowerEntityId.includes('humid')) {
-        return true;
-      }
-      
-      return false;
-    });
-  }
-
-  private _getEntityName(entityId: string): string {
-    if (!this.hass || !this.hass.states[entityId]) {
-      return entityId;
-    }
-    
-    const state = this.hass.states[entityId];
-    // Use friendly_name attribute if available, otherwise use entity ID
-    return state.attributes.friendly_name || entityId;
-  }
-
   static get styles() {
     return css`
       .card-config {
@@ -211,8 +125,7 @@ export class AirComfortCardEditor extends LitElement {
         color: var(--primary-text-color);
       }
 
-      input,
-      select {
+      input {
         padding: 8px;
         border: 1px solid var(--divider-color);
         border-radius: 4px;
@@ -231,6 +144,10 @@ export class AirComfortCardEditor extends LitElement {
         align-items: center;
         gap: 8px;
       }
+
+      ha-entity-picker {
+        margin-top: 8px;
+      }
     `;
   }
 
@@ -239,8 +156,6 @@ export class AirComfortCardEditor extends LitElement {
       return html``;
     }
 
-    const temperatureEntities = this._getTemperatureEntities();
-    const humidityEntities = this._getHumidityEntities();
     const config = this.config; // Store in local variable to avoid TS warnings
 
     return html`
@@ -256,37 +171,27 @@ export class AirComfortCardEditor extends LitElement {
           />
         </div>
 
-        <div class="option">
-          <label for="temperature_entity">Temperature Entity</label>
-          <select
-            id="temperature_entity"
-            .value=${config.temperature_entity || ''}
-            @change=${this._valueChanged}
-          >
-            <option value="">Select an entity...</option>
-            ${temperatureEntities.map(entity => html`
-              <option value=${entity}>
-                ${this._getEntityName(entity)}
-              </option>
-            `)}
-          </select>
-        </div>
+        <ha-entity-picker
+          .hass=${this.hass}
+          .value=${config.temperature_entity}
+          .label=${'Temperature Entity'}
+          .includeDomains=${['sensor']}
+          .includeDeviceClasses=${['temperature']}
+          .required=${true}
+          @value-changed=${this._entityChanged('temperature_entity')}
+          allow-custom-entity
+        ></ha-entity-picker>
 
-        <div class="option">
-          <label for="humidity_entity">Humidity Entity</label>
-          <select
-            id="humidity_entity"
-            .value=${config.humidity_entity || ''}
-            @change=${this._valueChanged}
-          >
-            <option value="">Select an entity...</option>
-            ${humidityEntities.map(entity => html`
-              <option value=${entity}>
-                ${this._getEntityName(entity)}
-              </option>
-            `)}
-          </select>
-        </div>
+        <ha-entity-picker
+          .hass=${this.hass}
+          .value=${config.humidity_entity}
+          .label=${'Humidity Entity'}
+          .includeDomains=${['sensor']}
+          .includeDeviceClasses=${['humidity']}
+          .required=${true}
+          @value-changed=${this._entityChanged('humidity_entity')}
+          allow-custom-entity
+        ></ha-entity-picker>
 
         <div class="checkbox-option">
           <input
@@ -319,6 +224,28 @@ export class AirComfortCardEditor extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  private _entityChanged(field: string) {
+    return (ev: CustomEvent) => {
+      if (!this.config) {
+        return;
+      }
+
+      const value = ev.detail.value;
+      
+      this.config = {
+        ...this.config,
+        [field]: value || undefined
+      };
+
+      const event = new CustomEvent('config-changed', {
+        detail: { config: this.config },
+        bubbles: true,
+        composed: true
+      });
+      this.dispatchEvent(event);
+    };
   }
 
   private _valueChanged(ev: Event): void {
