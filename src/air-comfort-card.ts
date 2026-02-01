@@ -158,6 +158,7 @@ export class AirComfortCardEditor extends LitElement {
       const attributes = state.attributes;
       const deviceClass = attributes.device_class;
       const unit = attributes.unit_of_measurement;
+      const lowerEntityId = entityId.toLowerCase();
       
       // Check device class first (most reliable)
       if (deviceClass === 'humidity') {
@@ -167,14 +168,12 @@ export class AirComfortCardEditor extends LitElement {
       // Check unit of measurement for humidity unit
       if (unit === '%') {
         // Additional check: make sure it's likely humidity, not battery or other percentage
-        const lowerEntityId = entityId.toLowerCase();
         if (lowerEntityId.includes('humidity') || lowerEntityId.includes('humid')) {
           return true;
         }
       }
       
       // Check entity ID contains humidity-related keywords
-      const lowerEntityId = entityId.toLowerCase();
       if (lowerEntityId.includes('humidity') || lowerEntityId.includes('humid')) {
         return true;
       }

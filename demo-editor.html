@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Air Comfort Card Editor Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    h1 {
+      color: #ffffff;
+      margin-bottom: 20px;
+    }
+    .test-info {
+      background: #333;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    .test-info h3 {
+      margin-top: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Air Comfort Card Editor Test</h1>
+    <div class="test-info">
+      <h3>Test Data</h3>
+      <p>This page demonstrates the visual editor with mock Home Assistant data including:</p>
+      <ul>
+        <li>Temperature sensors with friendly names</li>
+        <li>Humidity sensors with friendly names</li>
+        <li>Other sensors to verify filtering</li>
+      </ul>
+    </div>
+    <air-comfort-card-editor></air-comfort-card-editor>
+  </div>
+
+  <script type="module">
+    import './dist/air-comfort-card.js';
+
+    // Mock Home Assistant object
+    const mockHass = {
+      states: {
+        'sensor.living_room_temperature': {
+          state: '22.5',
+          attributes: {
+            friendly_name: 'Living Room Temperature',
+            device_class: 'temperature',
+            unit_of_measurement: '°C'
+          }
+        },
+        'sensor.bedroom_temp': {
+          state: '21.0',
+          attributes: {
+            friendly_name: 'Bedroom Temperature',
+            device_class: 'temperature',
+            unit_of_measurement: '°C'
+          }
+        },
+        'sensor.kitchen_temperature_sensor': {
+          state: '23.0',
+          attributes: {
+            friendly_name: 'Kitchen Temp Sensor',
+            unit_of_measurement: '°F'
+          }
+        },
+        'sensor.living_room_humidity': {
+          state: '45',
+          attributes: {
+            friendly_name: 'Living Room Humidity',
+            device_class: 'humidity',
+            unit_of_measurement: '%'
+          }
+        },
+        'sensor.bedroom_humidity': {
+          state: '50',
+          attributes: {
+            friendly_name: 'Bedroom Humidity',
+            device_class: 'humidity',
+            unit_of_measurement: '%'
+          }
+        },
+        'sensor.bathroom_humid': {
+          state: '65',
+          attributes: {
+            friendly_name: 'Bathroom Humidity Sensor',
+            unit_of_measurement: '%'
+          }
+        },
+        'sensor.battery_level': {
+          state: '85',
+          attributes: {
+            friendly_name: 'Phone Battery',
+            device_class: 'battery',
+            unit_of_measurement: '%'
+          }
+        },
+        'sensor.cpu_usage': {
+          state: '42',
+          attributes: {
+            friendly_name: 'CPU Usage',
+            unit_of_measurement: '%'
+          }
+        },
+        'sensor.motion_sensor': {
+          state: 'off',
+          attributes: {
+            friendly_name: 'Living Room Motion',
+            device_class: 'motion'
+          }
+        },
+        'light.living_room': {
+          state: 'on',
+          attributes: {
+            friendly_name: 'Living Room Light'
+          }
+        }
+      }
+    };
+
+    // Initialize the editor
+    const editor = document.querySelector('air-comfort-card-editor');
+    editor.hass = mockHass;
+    editor.setConfig({
+      type: 'custom:air-comfort-card',
+      temperature_entity: '',
+      humidity_entity: '',
+      show_temperature: true,
+      show_humidity: true,
+      show_comfort_level: true
+    });
+
+    // Listen for config changes
+    editor.addEventListener('config-changed', (e) => {
+      console.log('Config changed:', e.detail.config);
+    });
+  </script>
+</body>
+</html>
