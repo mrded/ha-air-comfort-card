@@ -552,7 +552,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 // Register the card with Home Assistant
 (window as any).customCards = (window as any).customCards || [];
 (window as any).customCards.push({
-  type: 'air-comfort-card',
+  type: 'custom:air-comfort-card',
   name: 'Air Comfort Card',
   description: 'A card that visualizes indoor air comfort using temperature and humidity',
   preview: false,

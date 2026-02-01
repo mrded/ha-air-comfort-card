@@ -313,5 +313,5 @@ function t(t,e,i,s){var o,r=arguments.length,n=r<3?e:null===s?s=Object.getOwnPro
           </div>
         </div>
       </div>
-    `}};t([at({attribute:!1})],ut.prototype,"hass",void 0),t([dt()],ut.prototype,"config",void 0),ut=t([nt("air-comfort-card")],ut),window.customCards=window.customCards||[],window.customCards.push({type:"air-comfort-card",name:"Air Comfort Card",description:"A card that visualizes indoor air comfort using temperature and humidity",preview:!1,documentationURL:"https://github.com/mrded/ha-air-comfort-card"});export{ut as AirComfortCard,ht as AirComfortCardEditor};
+    `}};t([at({attribute:!1})],ut.prototype,"hass",void 0),t([dt()],ut.prototype,"config",void 0),ut=t([nt("air-comfort-card")],ut),window.customCards=window.customCards||[],window.customCards.push({type:"custom:air-comfort-card",name:"Air Comfort Card",description:"A card that visualizes indoor air comfort using temperature and humidity",preview:!1,documentationURL:"https://github.com/mrded/ha-air-comfort-card"});export{ut as AirComfortCard,ht as AirComfortCardEditor};
 //# sourceMappingURL=air-comfort-card.js.map
