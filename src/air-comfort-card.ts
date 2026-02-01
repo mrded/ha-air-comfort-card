@@ -97,6 +97,20 @@ export class AirComfortCardEditor extends LitElement {
     this.config = config;
   }
 
+  private _getEntities(): string[] {
+    if (!this.hass) {
+      return [];
+    }
+    
+    // Get all entity IDs from Home Assistant
+    return Object.keys(this.hass.states).sort();
+  }
+
+  private _getSensorEntities(): string[] {
+    // Filter to only show sensor entities
+    return this._getEntities().filter(entityId => entityId.startsWith('sensor.'));
+  }
+
   static get styles() {
     return css`
       .card-config {
@@ -144,6 +158,9 @@ export class AirComfortCardEditor extends LitElement {
       return html``;
     }
 
+    const sensorEntities = this._getSensorEntities();
+    const config = this.config; // Store in local variable to avoid TS warnings
+
     return html`
       <div class="card-config">
         <div class="option">
@@ -151,7 +168,7 @@ export class AirComfortCardEditor extends LitElement {
           <input
             id="name"
             type="text"
-            .value=${this.config.name || ''}
+            .value=${config.name || ''}
             placeholder="Air Comfort"
             @input=${this._valueChanged}
           />
@@ -159,31 +176,41 @@ export class AirComfortCardEditor extends LitElement {
 
         <div class="option">
           <label for="temperature_entity">Temperature Entity</label>
-          <input
+          <select
             id="temperature_entity"
-            type="text"
-            .value=${this.config.temperature_entity || ''}
-            placeholder="sensor.temperature"
-            @input=${this._valueChanged}
-          />
+            .value=${config.temperature_entity || ''}
+            @change=${this._valueChanged}
+          >
+            <option value="">Select an entity...</option>
+            ${sensorEntities.map(entity => html`
+              <option value=${entity} ?selected=${entity === config.temperature_entity}>
+                ${entity}
+              </option>
+            `)}
+          </select>
         </div>
 
         <div class="option">
           <label for="humidity_entity">Humidity Entity</label>
-          <input
+          <select
             id="humidity_entity"
-            type="text"
-            .value=${this.config.humidity_entity || ''}
-            placeholder="sensor.humidity"
-            @input=${this._valueChanged}
-          />
+            .value=${config.humidity_entity || ''}
+            @change=${this._valueChanged}
+          >
+            <option value="">Select an entity...</option>
+            ${sensorEntities.map(entity => html`
+              <option value=${entity} ?selected=${entity === config.humidity_entity}>
+                ${entity}
+              </option>
+            `)}
+          </select>
         </div>
 
         <div class="checkbox-option">
           <input
             id="show_temperature"
             type="checkbox"
-            .checked=${this.config.show_temperature !== false}
+            .checked=${config.show_temperature !== false}
             @change=${this._valueChanged}
           />
           <label for="show_temperature">Show Temperature</label>
@@ -193,7 +220,7 @@ export class AirComfortCardEditor extends LitElement {
           <input
             id="show_humidity"
             type="checkbox"
-            .checked=${this.config.show_humidity !== false}
+            .checked=${config.show_humidity !== false}
             @change=${this._valueChanged}
           />
           <label for="show_humidity">Show Humidity</label>
@@ -203,7 +230,7 @@ export class AirComfortCardEditor extends LitElement {
           <input
             id="show_comfort_level"
             type="checkbox"
-            .checked=${this.config.show_comfort_level !== false}
+            .checked=${config.show_comfort_level !== false}
             @change=${this._valueChanged}
           />
           <label for="show_comfort_level">Show Comfort Level</label>
@@ -217,12 +244,18 @@ export class AirComfortCardEditor extends LitElement {
       return;
     }
 
-    const target = ev.target as HTMLInputElement;
+    const target = ev.target as HTMLInputElement | HTMLSelectElement;
     const id = target.id;
 
     let value: string | boolean | undefined;
     if (target.type === 'checkbox') {
-      value = target.checked;
+      value = (target as HTMLInputElement).checked;
+    } else if (target instanceof HTMLSelectElement) {
+      // For select elements
+      value = target.value;
+      if (value === '' && (id === 'temperature_entity' || id === 'humidity_entity')) {
+        value = undefined;
+      }
     } else {
       // For text inputs, only set to undefined if empty AND it's a required field
       // Allow empty strings for optional fields like 'name'
