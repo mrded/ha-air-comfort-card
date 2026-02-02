@@ -106,11 +106,6 @@ export class AirComfortCardEditor extends LitElement {
     return Object.keys(this.hass.states).sort();
   }
 
-  private _getSensorEntities(): string[] {
-    // Filter to only show sensor entities
-    return this._getEntities().filter(entityId => entityId.startsWith('sensor.'));
-  }
-
   static get styles() {
     return css`
       .card-config {
@@ -130,8 +125,7 @@ export class AirComfortCardEditor extends LitElement {
         color: var(--primary-text-color);
       }
 
-      input,
-      select {
+      input {
         padding: 8px;
         border: 1px solid var(--divider-color);
         border-radius: 4px;
@@ -150,6 +144,10 @@ export class AirComfortCardEditor extends LitElement {
         align-items: center;
         gap: 8px;
       }
+
+      ha-entity-picker {
+        margin-top: 8px;
+      }
     `;
   }
 
@@ -158,7 +156,6 @@ export class AirComfortCardEditor extends LitElement {
       return html``;
     }
 
-    const sensorEntities = this._getSensorEntities();
     const config = this.config; // Store in local variable to avoid TS warnings
 
     return html`
@@ -174,37 +171,27 @@ export class AirComfortCardEditor extends LitElement {
           />
         </div>
 
-        <div class="option">
-          <label for="temperature_entity">Temperature Entity</label>
-          <select
-            id="temperature_entity"
-            .value=${config.temperature_entity || ''}
-            @change=${this._valueChanged}
-          >
-            <option value="">Select an entity...</option>
-            ${sensorEntities.map(entity => html`
-              <option value=${entity}>
-                ${entity}
-              </option>
-            `)}
-          </select>
-        </div>
+        <ha-entity-picker
+          .hass=${this.hass}
+          .value=${config.temperature_entity}
+          .label=${'Temperature Entity'}
+          .includeDomains=${['sensor']}
+          .includeDeviceClasses=${['temperature']}
+          .required=${true}
+          @value-changed=${this._entityChanged('temperature_entity')}
+          allow-custom-entity
+        ></ha-entity-picker>
 
-        <div class="option">
-          <label for="humidity_entity">Humidity Entity</label>
-          <select
-            id="humidity_entity"
-            .value=${config.humidity_entity || ''}
-            @change=${this._valueChanged}
-          >
-            <option value="">Select an entity...</option>
-            ${sensorEntities.map(entity => html`
-              <option value=${entity}>
-                ${entity}
-              </option>
-            `)}
-          </select>
-        </div>
+        <ha-entity-picker
+          .hass=${this.hass}
+          .value=${config.humidity_entity}
+          .label=${'Humidity Entity'}
+          .includeDomains=${['sensor']}
+          .includeDeviceClasses=${['humidity']}
+          .required=${true}
+          @value-changed=${this._entityChanged('humidity_entity')}
+          allow-custom-entity
+        ></ha-entity-picker>
 
         <div class="checkbox-option">
           <input
@@ -237,6 +224,27 @@ export class AirComfortCardEditor extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  private _entityChanged(field: string) {
+    return (ev: CustomEvent) => {
+      if (!this.config) {
+        return;
+      }
+
+      const value = ev.detail.value;
+      this.config = {
+        ...this.config,
+        [field]: value || undefined
+      };
+
+      const event = new CustomEvent('config-changed', {
+        detail: { config: this.config },
+        bubbles: true,
+        composed: true
+      });
+      this.dispatchEvent(event);
+    };
   }
 
   private _valueChanged(ev: Event): void {
