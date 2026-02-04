@@ -94,16 +94,35 @@ function calculateComfortZone(temp: number, humidity: number): {
   // Right (90°): Humid  
   // Bottom (180°): Cold
   // Left (270°): Dry
-  let angle = Math.atan2(humidityDirection, tempDirection) * (180 / Math.PI);
-  angle = (angle + 90 + 360) % 360;
+  let angle = 0;
   
-  // If in comfort zone, use actual values relative to ideal center to determine a neutral position
   if (isInComfortZone) {
+    // If fully in comfort zone, use actual values relative to ideal center to determine a neutral position
     const idealTemp = (tempMin + tempMax) / 2;
     const idealHumidity = (humidityMin + humidityMax) / 2;
     const tempOffset = temp - idealTemp;
     const humidityOffset = humidity - idealHumidity;
     angle = Math.atan2(humidityOffset, tempOffset) * (180 / Math.PI);
+    angle = (angle + 90 + 360) % 360;
+  } else {
+    // Calculate angle based on actual deviations, not just direction
+    // Use normalized deviations for angle calculation to avoid direction-only angles
+    let tempAngleComponent = 0;
+    let humidityAngleComponent = 0;
+    
+    if (temp < tempMin) {
+      tempAngleComponent = -(tempMin - temp); // Negative for cold
+    } else if (temp > tempMax) {
+      tempAngleComponent = temp - tempMax; // Positive for warm
+    }
+    
+    if (humidity < humidityMin) {
+      humidityAngleComponent = -(humidityMin - humidity); // Negative for dry
+    } else if (humidity > humidityMax) {
+      humidityAngleComponent = humidity - humidityMax; // Positive for humid
+    }
+    
+    angle = Math.atan2(humidityAngleComponent, tempAngleComponent) * (180 / Math.PI);
     angle = (angle + 90 + 360) % 360;
   }
   
