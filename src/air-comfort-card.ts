@@ -34,58 +34,147 @@ interface LovelaceCard extends HTMLElement {
 // Comfort zone calculation based on temperature and humidity
 function calculateComfortZone(temp: number, humidity: number): {
   angle: number;
-  comfort: string;
-  description: string;
+  radialDistance: number;
+  isInComfortZone: boolean;
+  statusText: string;
+  tempDeviation: number;
+  humidityDeviation: number;
 } {
-  // Ideal comfort zone: 20-24°C and 40-60% humidity
-  const idealTemp = 22;
-  const idealHumidity = 50;
+  // Comfort zone: 20-24°C and 40-60% humidity
+  const tempMin = 20;
+  const tempMax = 24;
+  const humidityMin = 40;
+  const humidityMax = 60;
   
-  // Calculate deviations
-  const tempDev = (temp - idealTemp) / 10; // Normalize to roughly -1 to 1
-  const humidityDev = (humidity - idealHumidity) / 50; // Normalize to roughly -1 to 1
+  // Normalization factors for radial distance calculation
+  const TEMP_NORMALIZATION_FACTOR = 10; // 10°C deviation = 1.0 normalized
+  const HUMIDITY_NORMALIZATION_FACTOR = 40; // 40% deviation = 1.0 normalized
   
-  // Calculate angle (0-360 degrees)
-  // We'll map the comfort zone as a circle where:
-  // - Top (0°): Perfect comfort
-  // - Right (90°): Too warm/humid
-  // - Bottom (180°): Too cold/dry
-  // - Left (270°): Too cold/humid
-  let angle = Math.atan2(humidityDev, tempDev) * (180 / Math.PI);
+  // Thresholds for combined status messages
+  const TEMP_PREFERENCE_THRESHOLD = 0.5; // Prefer temperature in status when temp deviation is 50% larger
+  const HUMIDITY_COMBINATION_THRESHOLD = 5; // Show combined status if humidity deviates by 5%+
+  const TEMP_COMBINATION_THRESHOLD = 1; // Show combined status if temperature deviates by 1°C+
   
-  // Adjust angle to start from top (12 o'clock position)
-  angle = (angle + 90 + 360) % 360;
-  
-  // Determine comfort level and description
-  let comfort = 'comfortable';
-  let description = 'Perfect';
-  
-  const distance = Math.sqrt(tempDev * tempDev + humidityDev * humidityDev);
-  
-  if (distance > 0.8) {
-    comfort = 'very-uncomfortable';
-    if (temp < 18) {
-      description = humidity < 40 ? 'Too Cold & Dry' : humidity > 60 ? 'Too Cold & Humid' : 'Too Cold';
-    } else if (temp > 26) {
-      description = humidity < 40 ? 'Too Warm & Dry' : humidity > 60 ? 'Too Warm & Humid' : 'Too Warm';
-    } else {
-      description = humidity < 40 ? 'Too Dry' : 'Too Humid';
-    }
-  } else if (distance > 0.5) {
-    comfort = 'uncomfortable';
-    if (temp < 20) {
-      description = humidity < 45 ? 'Slightly Cold & Dry' : humidity > 55 ? 'Slightly Cold & Humid' : 'Slightly Cold';
-    } else if (temp > 24) {
-      description = humidity < 45 ? 'Slightly Warm & Dry' : humidity > 55 ? 'Slightly Warm & Humid' : 'Slightly Warm';
-    } else {
-      description = humidity < 45 ? 'Slightly Dry' : 'Slightly Humid';
-    }
-  } else if (distance > 0.3) {
-    comfort = 'acceptable';
-    description = 'Good';
+  // Calculate deviations from comfort zone
+  let tempDeviation = 0;
+  if (temp < tempMin) {
+    tempDeviation = tempMin - temp;
+  } else if (temp > tempMax) {
+    tempDeviation = temp - tempMax;
   }
   
-  return { angle, comfort, description };
+  let humidityDeviation = 0;
+  if (humidity < humidityMin) {
+    humidityDeviation = humidityMin - humidity;
+  } else if (humidity > humidityMax) {
+    humidityDeviation = humidity - humidityMax;
+  }
+  
+  // Check if in comfort zone
+  const isInComfortZone = tempDeviation === 0 && humidityDeviation === 0;
+  
+  // Calculate direction angle based on which side of comfort zone we're on
+  let tempDirection = 0;
+  let humidityDirection = 0;
+  
+  if (temp < tempMin) {
+    tempDirection = -1; // Cold
+  } else if (temp > tempMax) {
+    tempDirection = 1; // Warm
+  }
+  
+  if (humidity < humidityMin) {
+    humidityDirection = -1; // Dry
+  } else if (humidity > humidityMax) {
+    humidityDirection = 1; // Humid
+  }
+  
+  // Map to angle (0-360 degrees)
+  // Top (0°): Too warm
+  // Right (90°): Humid  
+  // Bottom (180°): Cold
+  // Left (270°): Dry
+  let angle = 0;
+  
+  if (isInComfortZone) {
+    // If fully in comfort zone, use actual values relative to ideal center to determine a neutral position
+    const idealTemp = (tempMin + tempMax) / 2;
+    const idealHumidity = (humidityMin + humidityMax) / 2;
+    const tempOffset = temp - idealTemp;
+    const humidityOffset = humidity - idealHumidity;
+    angle = Math.atan2(humidityOffset, tempOffset) * (180 / Math.PI);
+    angle = (angle + 90 + 360) % 360;
+  } else {
+    // Calculate angle based on actual deviations, not just direction
+    // Use actual deviation values for angle calculation
+    let tempAngleComponent = 0;
+    let humidityAngleComponent = 0;
+    
+    if (temp < tempMin) {
+      tempAngleComponent = temp - tempMin; // Negative for cold
+    } else if (temp > tempMax) {
+      tempAngleComponent = temp - tempMax; // Positive for warm
+    }
+    
+    if (humidity < humidityMin) {
+      humidityAngleComponent = humidity - humidityMin; // Negative for dry
+    } else if (humidity > humidityMax) {
+      humidityAngleComponent = humidity - humidityMax; // Positive for humid
+    }
+    
+    // Calculate angle using atan2(-temp, humidity) + 90 to map:
+    // - Warm (temp > 0) → 0° (top)
+    // - Humid (humidity > 0) → 90° (right)
+    // - Cold (temp < 0) → 180° (bottom)
+    // - Dry (humidity < 0) → 270° (left)
+    angle = Math.atan2(-tempAngleComponent, humidityAngleComponent) * (180 / Math.PI);
+    angle = (angle + 90 + 360) % 360;
+  }
+  
+  // Calculate radial distance based on deviation magnitude
+  // Normalize deviations to a 0-1 scale
+  const normalizedTempDev = tempDeviation / TEMP_NORMALIZATION_FACTOR;
+  const normalizedHumidityDev = humidityDeviation / HUMIDITY_NORMALIZATION_FACTOR;
+  
+  // Combined deviation (Euclidean distance)
+  const radialDistance = Math.sqrt(
+    normalizedTempDev * normalizedTempDev + 
+    normalizedHumidityDev * normalizedHumidityDev
+  );
+  
+  // Determine status text
+  let statusText = 'PLEASANT';
+  
+  if (!isInComfortZone) {
+    // Find the most significant deviation
+    const absTempDev = Math.abs(tempDeviation);
+    const absHumidityDev = Math.abs(humidityDeviation);
+    
+    if (absTempDev > absHumidityDev * TEMP_PREFERENCE_THRESHOLD) {
+      // Temperature is the primary issue (with threshold to prefer temp)
+      if (temp < tempMin) {
+        statusText = absHumidityDev > HUMIDITY_COMBINATION_THRESHOLD ? (humidity < humidityMin ? 'COLD & DRY' : 'COLD & HUMID') : 'COLD';
+      } else {
+        statusText = absHumidityDev > HUMIDITY_COMBINATION_THRESHOLD ? (humidity < humidityMin ? 'WARM & DRY' : 'WARM & HUMID') : 'WARM';
+      }
+    } else {
+      // Humidity is the primary issue
+      if (humidity < humidityMin) {
+        statusText = absTempDev > TEMP_COMBINATION_THRESHOLD ? (temp < tempMin ? 'COLD & DRY' : 'WARM & DRY') : 'DRY';
+      } else {
+        statusText = absTempDev > TEMP_COMBINATION_THRESHOLD ? (temp < tempMin ? 'COLD & HUMID' : 'WARM & HUMID') : 'HUMID';
+      }
+    }
+  }
+  
+  return { 
+    angle, 
+    radialDistance, 
+    isInComfortZone, 
+    statusText,
+    tempDeviation,
+    humidityDeviation
+  };
 }
 
 @customElement('air-comfort-card-editor')
@@ -379,23 +468,24 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         justify-content: center;
       }
 
-      .dial-ring {
+      .dial-outer-ring {
         position: absolute;
-        width: 200px;
-        height: 200px;
+        width: 240px;
+        height: 240px;
         border-radius: 50%;
-        border: 3px solid rgba(255, 255, 255, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.2);
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
 
-      .dial-center {
+      .dial-comfort-zone {
         position: absolute;
-        width: 160px;
-        height: 160px;
+        width: 120px;
+        height: 120px;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(100, 200, 100, 0.15);
+        border: 2px solid rgba(100, 200, 100, 0.4);
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
@@ -524,28 +614,32 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       `;
     }
 
-    const { angle, comfort, description } = calculateComfortZone(temperature, humidity);
+    const { angle, radialDistance, isInComfortZone, statusText } = calculateComfortZone(temperature, humidity);
     
-    // Calculate indicator position on the dial ring
-    const radius = 80; // Position on the ring edge
-    const indicatorAngle = (angle - 90) * (Math.PI / 180);
-    const indicatorX = radius * Math.cos(indicatorAngle);
-    const indicatorY = radius * Math.sin(indicatorAngle);
-
-    // Determine status text based on comfort level
-    let statusText = 'COMFORTABLE';
-    if (temperature < 20) {
-      statusText = 'COLD';
-    } else if (temperature > 24) {
-      statusText = 'WARM';
-    } else if (humidity < 40) {
-      statusText = 'DRY';
-    } else if (humidity > 60) {
-      statusText = 'HUMID';
+    // Calculate indicator position
+    // Inner circle radius: 60px (comfort zone)
+    // Outer circle radius: 120px (max boundary)
+    const innerRadius = 60; // Comfort zone radius
+    const outerRadius = 120; // Max boundary radius
+    const MAX_RADIAL_DISTANCE_SCALE = 1.5; // Radial distance value at which indicator reaches outer boundary
+    const COMFORT_ZONE_VARIATION = 0.3; // Max movement within comfort zone as fraction of inner radius
+    
+    let actualRadius;
+    if (isInComfortZone) {
+      // Inside comfort zone: stay near center, small variations based on position within zone
+      actualRadius = radialDistance * innerRadius * COMFORT_ZONE_VARIATION;
+    } else {
+      // Outside comfort zone: map linearly from inner edge to outer edge
+      actualRadius = innerRadius + (radialDistance * (outerRadius - innerRadius) / MAX_RADIAL_DISTANCE_SCALE);
+      actualRadius = Math.min(actualRadius, outerRadius); // Cap at outer radius
     }
+    
+    const indicatorAngle = (angle - 90) * (Math.PI / 180);
+    const indicatorX = actualRadius * Math.cos(indicatorAngle);
+    const indicatorY = actualRadius * Math.sin(indicatorAngle);
 
-    // Show warning icon if not comfortable
-    const showWarning = statusText !== 'COMFORTABLE';
+    // Show warning icon if not in comfort zone
+    const showWarning = !isInComfortZone;
 
     return html`
       <div class="card-content">
@@ -556,14 +650,14 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         
         <div class="comfort-dial-container">
           <div class="comfort-dial">
-            <div class="dial-ring"></div>
-            <div class="dial-center"></div>
+            <div class="dial-outer-ring"></div>
+            <div class="dial-comfort-zone"></div>
             <div 
               class="comfort-indicator"
               style="transform: translate(-50%, -50%) translate(${indicatorX}px, ${indicatorY}px);"
             ></div>
             
-            <div class="dial-label label-top">TOO WARM</div>
+            <div class="dial-label label-top">WARM</div>
             <div class="dial-label label-right">HUMID</div>
             <div class="dial-label label-bottom">COLD</div>
             <div class="dial-label label-left">DRY</div>
