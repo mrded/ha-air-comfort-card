@@ -111,13 +111,13 @@ function calculateComfortZone(temp: number, humidity: number): {
     let humidityAngleComponent = 0;
     
     if (temp < tempMin) {
-      tempAngleComponent = -(tempMin - temp); // Negative for cold
+      tempAngleComponent = temp - tempMin; // Negative for cold
     } else if (temp > tempMax) {
       tempAngleComponent = temp - tempMax; // Positive for warm
     }
     
     if (humidity < humidityMin) {
-      humidityAngleComponent = -(humidityMin - humidity); // Negative for dry
+      humidityAngleComponent = humidity - humidityMin; // Negative for dry
     } else if (humidity > humidityMax) {
       humidityAngleComponent = humidity - humidityMax; // Positive for humid
     }
