@@ -46,6 +46,15 @@ function calculateComfortZone(temp: number, humidity: number): {
   const humidityMin = 40;
   const humidityMax = 60;
   
+  // Normalization factors for radial distance calculation
+  const TEMP_NORMALIZATION_FACTOR = 10; // 10°C deviation = 1.0 normalized
+  const HUMIDITY_NORMALIZATION_FACTOR = 40; // 40% deviation = 1.0 normalized
+  
+  // Thresholds for combined status messages
+  const TEMP_PREFERENCE_THRESHOLD = 0.5; // Prefer temperature in status when temp deviation is 50% larger
+  const HUMIDITY_COMBINATION_THRESHOLD = 5; // Show combined status if humidity deviates by 5%+
+  const TEMP_COMBINATION_THRESHOLD = 1; // Show combined status if temperature deviates by 1°C+
+  
   // Calculate deviations from comfort zone
   let tempDeviation = 0;
   if (temp < tempMin) {
@@ -100,8 +109,8 @@ function calculateComfortZone(temp: number, humidity: number): {
   
   // Calculate radial distance based on deviation magnitude
   // Normalize deviations to a 0-1 scale
-  const normalizedTempDev = tempDeviation / 10; // 10°C deviation = 1.0
-  const normalizedHumidityDev = humidityDeviation / 40; // 40% deviation = 1.0
+  const normalizedTempDev = tempDeviation / TEMP_NORMALIZATION_FACTOR;
+  const normalizedHumidityDev = humidityDeviation / HUMIDITY_NORMALIZATION_FACTOR;
   
   // Combined deviation (Euclidean distance)
   const radialDistance = Math.sqrt(
@@ -117,19 +126,19 @@ function calculateComfortZone(temp: number, humidity: number): {
     const absTempDev = Math.abs(tempDeviation);
     const absHumidityDev = Math.abs(humidityDeviation);
     
-    if (absTempDev > absHumidityDev * 0.5) {
-      // Temperature is the primary issue (with 50% threshold to prefer temp)
+    if (absTempDev > absHumidityDev * TEMP_PREFERENCE_THRESHOLD) {
+      // Temperature is the primary issue (with threshold to prefer temp)
       if (temp < tempMin) {
-        statusText = absHumidityDev > 5 ? (humidity < humidityMin ? 'COLD & DRY' : 'COLD & HUMID') : 'COLD';
+        statusText = absHumidityDev > HUMIDITY_COMBINATION_THRESHOLD ? (humidity < humidityMin ? 'COLD & DRY' : 'COLD & HUMID') : 'COLD';
       } else {
-        statusText = absHumidityDev > 5 ? (humidity < humidityMin ? 'WARM & DRY' : 'WARM & HUMID') : 'WARM';
+        statusText = absHumidityDev > HUMIDITY_COMBINATION_THRESHOLD ? (humidity < humidityMin ? 'WARM & DRY' : 'WARM & HUMID') : 'WARM';
       }
     } else {
       // Humidity is the primary issue
       if (humidity < humidityMin) {
-        statusText = absTempDev > 1 ? (temp < tempMin ? 'COLD & DRY' : 'WARM & DRY') : 'DRY';
+        statusText = absTempDev > TEMP_COMBINATION_THRESHOLD ? (temp < tempMin ? 'COLD & DRY' : 'WARM & DRY') : 'DRY';
       } else {
-        statusText = absTempDev > 1 ? (temp < tempMin ? 'COLD & HUMID' : 'WARM & HUMID') : 'HUMID';
+        statusText = absTempDev > TEMP_COMBINATION_THRESHOLD ? (temp < tempMin ? 'COLD & HUMID' : 'WARM & HUMID') : 'HUMID';
       }
     }
   }
@@ -588,15 +597,16 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     // Outer circle radius: 120px (max boundary)
     const innerRadius = 60; // Comfort zone radius
     const outerRadius = 120; // Max boundary radius
+    const MAX_RADIAL_DISTANCE_SCALE = 1.5; // Radial distance value at which indicator reaches outer boundary
+    const COMFORT_ZONE_VARIATION = 0.3; // Max movement within comfort zone as fraction of inner radius
     
     let actualRadius;
     if (isInComfortZone) {
       // Inside comfort zone: stay near center, small variations based on position within zone
-      actualRadius = radialDistance * innerRadius * 0.3; // Max 30% of inner radius when in comfort zone
+      actualRadius = radialDistance * innerRadius * COMFORT_ZONE_VARIATION;
     } else {
       // Outside comfort zone: map linearly from inner edge to outer edge
-      // radialDistance of 0 = innerRadius, radialDistance of 1.5+ = outerRadius
-      actualRadius = innerRadius + (radialDistance * (outerRadius - innerRadius) / 1.5);
+      actualRadius = innerRadius + (radialDistance * (outerRadius - innerRadius) / MAX_RADIAL_DISTANCE_SCALE);
       actualRadius = Math.min(actualRadius, outerRadius); // Cap at outer radius
     }
     
