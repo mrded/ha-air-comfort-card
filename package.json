@@ -1,7 +1,7 @@
 {
   "name": "ha-air-comfort-card",
   "version": "1.0.0",
-  "description": "A custom Home Assistant card that visualises indoor air comfort using temperature and humidity",
+  "description": "A Home Assistant card that visualises indoor air comfort",
   "main": "dist/air-comfort-card.js",
   "scripts": {
     "build": "rollup -c",

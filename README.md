@@ -107,8 +107,7 @@ The moving dot indicator shows your current conditions relative to these zones, 
 
 ### Prerequisites
 
-- Node.js 16 or higher
-- npm or yarn
+- [Bun](https://bun.sh/) (or Node.js 16+ with npm)
 
 ### Building from Source
 
@@ -118,13 +117,13 @@ git clone https://github.com/mrded/ha-air-comfort-card.git
 cd ha-air-comfort-card
 
 # Install dependencies
-npm install
+bun install
 
 # Build the card
-npm run build
+bun run build
 
 # Watch for changes (development)
-npm run watch
+bun run watch
 ```
 
 The compiled file will be in the `dist` folder.
