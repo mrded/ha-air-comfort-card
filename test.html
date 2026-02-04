@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Air Comfort Card Test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #111;
+      color: #fff;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      margin-top: 0;
+      font-weight: 400;
+    }
+    .controls {
+      background: #222;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      max-width: 400px;
+    }
+    .control {
+      margin-bottom: 15px;
+    }
+    .control:last-child {
+      margin-bottom: 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: #4CAF50;
+    }
+    air-comfort-card {
+      display: block;
+      max-width: 400px;
+      --primary-text-color: #ffffff;
+      --secondary-text-color: rgba(255, 255, 255, 0.6);
+      --ha-card-background: #1e1e1e;
+      --card-background-color: #1e1e1e;
+      --warning-color: #ff9800;
+    }
+  </style>
+</head>
+<body>
+  <h1>Air Comfort Card</h1>
+
+  <air-comfort-card></air-comfort-card>
+
+  <div class="controls">
+    <div class="control">
+      <label>Temperature: <strong id="temp-value">22</strong>°C</label>
+      <input type="range" id="temperature" min="10" max="35" value="22" step="0.5">
+    </div>
+    <div class="control">
+      <label>Humidity: <strong id="humidity-value">50</strong>%</label>
+      <input type="range" id="humidity" min="10" max="90" value="50">
+    </div>
+  </div>
+
+  <script type="module">
+    import './dist/air-comfort-card.js';
+
+    const card = document.querySelector('air-comfort-card');
+    const tempSlider = document.getElementById('temperature');
+    const humiditySlider = document.getElementById('humidity');
+    const tempValue = document.getElementById('temp-value');
+    const humidityValue = document.getElementById('humidity-value');
+
+    function createHass(temperature, humidity) {
+      return {
+        states: {
+          'sensor.temperature': {
+            state: String(temperature),
+            attributes: { unit_of_measurement: '°C' }
+          },
+          'sensor.humidity': {
+            state: String(humidity),
+            attributes: { unit_of_measurement: '%' }
+          }
+        },
+        callService: async () => {}
+      };
+    }
+
+    card.setConfig({
+      type: 'custom:air-comfort-card',
+      temperature_entity: 'sensor.temperature',
+      humidity_entity: 'sensor.humidity',
+      name: 'Living Room'
+    });
+
+    function update() {
+      const temp = parseFloat(tempSlider.value);
+      const humidity = parseInt(humiditySlider.value);
+      tempValue.textContent = temp;
+      humidityValue.textContent = humidity;
+      card.hass = createHass(temp, humidity);
+    }
+
+    tempSlider.addEventListener('input', update);
+    humiditySlider.addEventListener('input', update);
+
+    update();
+  </script>
+</body>
+</html>
