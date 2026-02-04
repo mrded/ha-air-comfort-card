@@ -10,16 +10,16 @@ This is a custom Home Assistant Lovelace card that visualizes indoor air comfort
 
 ```bash
 # Install dependencies
-npm install
+bun install
 
 # Build the card (output: dist/air-comfort-card.js)
-npm run build
+bun run build
 
 # Watch mode for development
-npm run watch
+bun run watch
 
 # Lint TypeScript
-npm run lint
+bun run lint
 ```
 
 ## Architecture
