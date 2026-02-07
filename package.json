@@ -6,7 +6,8 @@
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "start:dev": "bun run build && ln -sfn ../dist public/dist && bunx --bun serve public"
   },
   "keywords": [
     "home-assistant",
