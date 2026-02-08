@@ -37,7 +37,9 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       humidity_entity: "sensor.humidity",
       show_temperature: true,
       show_humidity: true,
-      show_comfort_level: true
+      show_comfort_level: true,
+      show_temperature_graph: true,
+      show_humidity_graph: true
     };
   }
 
@@ -56,6 +58,8 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       show_temperature: true,
       show_humidity: true,
       show_comfort_level: true,
+      show_temperature_graph: true,
+      show_humidity_graph: true,
       ...config
     };
   }
@@ -97,7 +101,8 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     super.updated(changedProperties);
     if (
       changedProperties.has("temperatureHistory") ||
-      changedProperties.has("humidityHistory")
+      changedProperties.has("humidityHistory") ||
+      changedProperties.has("config")
     ) {
       this.updateCharts();
     }
@@ -246,7 +251,16 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       "humidity-chart"
     ) as HTMLCanvasElement | null;
 
-    if (!tempCanvas || !humidityCanvas) {
+    if (!tempCanvas && this.temperatureChart) {
+      this.temperatureChart.destroy();
+      this.temperatureChart = undefined;
+    }
+    if (!humidityCanvas && this.humidityChart) {
+      this.humidityChart.destroy();
+      this.humidityChart = undefined;
+    }
+
+    if (!tempCanvas && !humidityCanvas) {
       return;
     }
 
@@ -258,7 +272,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     const humidityUnit = humidityState?.attributes.unit_of_measurement || "%";
 
     // Update or create temperature chart
-    if (this.temperatureHistory.length > 0) {
+    if (tempCanvas && this.temperatureHistory.length > 0) {
       const tempConfig = this.getChartConfig(
         this.temperatureHistory,
         "Temperature",
@@ -274,7 +288,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     }
 
     // Update or create humidity chart
-    if (this.humidityHistory.length > 0) {
+    if (humidityCanvas && this.humidityHistory.length > 0) {
       const humidityConfig = this.getChartConfig(
         this.humidityHistory,
         "Humidity",
@@ -426,20 +440,42 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
           </div>
         </div>
 
-        <div class="charts-container">
-          <div class="chart-wrapper">
-            <div class="chart-label">Temperature (24h)</div>
-            <div class="chart-canvas-container">
-              <canvas id="temp-chart"></canvas>
-            </div>
-          </div>
-          <div class="chart-wrapper">
-            <div class="chart-label">Humidity (24h)</div>
-            <div class="chart-canvas-container">
-              <canvas id="humidity-chart"></canvas>
-            </div>
-          </div>
-        </div>
+        ${this.renderCharts()}
+      </div>
+    `;
+  }
+
+  private renderCharts() {
+    if (!this.config) {
+      return null;
+    }
+    const showTemperatureGraph = this.config.show_temperature_graph !== false;
+    const showHumidityGraph = this.config.show_humidity_graph !== false;
+    if (!showTemperatureGraph && !showHumidityGraph) {
+      return null;
+    }
+    return html`
+      <div class="charts-container">
+        ${showTemperatureGraph
+          ? html`
+              <div class="chart-wrapper">
+                <div class="chart-label">Temperature (24h)</div>
+                <div class="chart-canvas-container">
+                  <canvas id="temp-chart"></canvas>
+                </div>
+              </div>
+            `
+          : ""}
+        ${showHumidityGraph
+          ? html`
+              <div class="chart-wrapper">
+                <div class="chart-label">Humidity (24h)</div>
+                <div class="chart-canvas-container">
+                  <canvas id="humidity-chart"></canvas>
+                </div>
+              </div>
+            `
+          : ""}
       </div>
     `;
   }

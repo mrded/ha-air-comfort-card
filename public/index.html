@@ -66,6 +66,21 @@
     .control:last-child {
       margin-bottom: 0;
     }
+    .checkboxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .checkbox-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+    .checkbox-option input {
+      width: 16px;
+      height: 16px;
+    }
     label {
       display: block;
       margin-bottom: 8px;
@@ -113,6 +128,31 @@
       <div class="control">
         <label>Humidity: <strong id="humidity-value">50</strong>%</label>
         <input type="range" id="humidity" min="10" max="90" value="50">
+      </div>
+      <div class="control">
+        <label>Card Options</label>
+        <div class="checkboxes">
+          <label class="checkbox-option">
+            <input type="checkbox" data-setting="show_temperature" checked>
+            <span>Show Temperature</span>
+          </label>
+          <label class="checkbox-option">
+            <input type="checkbox" data-setting="show_humidity" checked>
+            <span>Show Humidity</span>
+          </label>
+          <label class="checkbox-option">
+            <input type="checkbox" data-setting="show_comfort_level" checked>
+            <span>Show Comfort Level</span>
+          </label>
+          <label class="checkbox-option">
+            <input type="checkbox" data-setting="show_temperature_graph" checked>
+            <span>Show Temperature Graph</span>
+          </label>
+          <label class="checkbox-option">
+            <input type="checkbox" data-setting="show_humidity_graph" checked>
+            <span>Show Humidity Graph</span>
+          </label>
+        </div>
       </div>
     </div>
   </div>
@@ -210,17 +250,29 @@
       };
     }
 
-    cards.forEach(({ element, name }) => {
-      if (!element) {
-        return;
-      }
-      element.setConfig({
-        type: 'custom:air-comfort-card',
-        temperature_entity: 'sensor.temperature',
-        humidity_entity: 'sensor.humidity',
-        name
+    const settings = {
+      show_temperature: true,
+      show_humidity: true,
+      show_comfort_level: true,
+      show_temperature_graph: true,
+      show_humidity_graph: true
+    };
+
+    function applyConfig() {
+      cards.forEach(({ element, name }) => {
+        if (!element) {
+          return;
+        }
+        element.setConfig({
+          type: 'custom:air-comfort-card',
+          temperature_entity: 'sensor.temperature',
+          humidity_entity: 'sensor.humidity',
+          name,
+          ...settings
+        });
       });
-    });
+      update();
+    }
 
     function update() {
       const temp = parseFloat(tempSlider.value);
@@ -238,8 +290,24 @@
 
     tempSlider.addEventListener('input', update);
     humiditySlider.addEventListener('input', update);
+    document
+      .querySelectorAll('input[data-setting]')
+      .forEach(input => {
+        input.addEventListener('change', event => {
+          const target = event.currentTarget;
+          if (!(target instanceof HTMLInputElement)) {
+            return;
+          }
+          const key = target.dataset.setting;
+          if (!key) {
+            return;
+          }
+          settings[key] = target.checked;
+          applyConfig();
+        });
+      });
 
-    update();
+    applyConfig();
   </script>
 </body>
 </html>

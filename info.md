@@ -44,6 +44,8 @@ name: Living Room Comfort
 show_temperature: true
 show_humidity: true
 show_comfort_level: true
+show_temperature_graph: true
+show_humidity_graph: true
 ```
 
 **Note**: The card title (`name`) can now be easily edited through the visual editor in the Home Assistant UI.
