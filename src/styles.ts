@@ -247,4 +247,35 @@ export const cardStyles = css`
       align-items: flex-start;
     }
   }
+
+  .charts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .chart-wrapper {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chart-label {
+    font-size: 0.75em;
+    color: var(--secondary-text-color, rgba(255, 255, 255, 0.6));
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .chart-canvas-container {
+    position: relative;
+    height: 120px;
+    width: 100%;
+  }
+
+  .chart-canvas-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
 `;
