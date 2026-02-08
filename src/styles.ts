@@ -248,11 +248,44 @@ export const cardStyles = css`
     }
   }
 
+  .history-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .history-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9em;
+    color: var(--primary-text-color, #ffffff);
+    cursor: pointer;
+  }
+
+  .history-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-color, #4dabf7);
+    border-radius: 8px;
+  }
+
+  .history-toggle-icon {
+    transition: transform 0.3s ease;
+  }
+
+  .history-toggle[aria-expanded="true"] .history-toggle-icon {
+    transform: rotate(180deg);
+  }
+
   .charts-container {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    margin-top: 24px;
+    margin-top: 0;
   }
 
   .chart-wrapper {

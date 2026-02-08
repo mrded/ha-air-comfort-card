@@ -21,6 +21,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
   @state() private dialSize = 280;
   @state() private temperatureHistory: ChartDataPoint[] = [];
   @state() private humidityHistory: ChartDataPoint[] = [];
+  @state() private historyExpanded = false;
 
   private resizeObserver?: ResizeObserver;
   private temperatureChart?: Chart;
@@ -99,11 +100,18 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 
   protected updated(changedProperties: PropertyValues): void {
     super.updated(changedProperties);
-    if (
+    const chartDataChanged =
       changedProperties.has("temperatureHistory") ||
       changedProperties.has("humidityHistory") ||
-      changedProperties.has("config")
-    ) {
+      changedProperties.has("config");
+
+    if (changedProperties.has("historyExpanded")) {
+      if (this.historyExpanded) {
+        this.updateCharts();
+      } else {
+        this.destroyCharts();
+      }
+    } else if (this.historyExpanded && chartDataChanged) {
       this.updateCharts();
     }
   }
@@ -440,9 +448,20 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
           </div>
         </div>
 
-        ${this.renderCharts()}
-      </div>
-    `;
+    ${this.renderCharts()}
+  </div>
+`;
+  }
+
+  private toggleHistory(): void {
+    this.historyExpanded = !this.historyExpanded;
+  }
+
+  private handleHistoryToggleKeyDown(event: KeyboardEvent): void {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      this.toggleHistory();
+    }
   }
 
   private renderCharts() {
@@ -455,24 +474,58 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       return null;
     }
     return html`
-      <div class="charts-container">
-        ${showTemperatureGraph
+      <div class="history-section">
+        <div
+          class="history-toggle"
+          role="button"
+          tabindex="0"
+          aria-expanded="${this.historyExpanded}"
+          @click=${this.toggleHistory}
+          @keydown=${this.handleHistoryToggleKeyDown}
+        >
+          <span>
+            ${this.historyExpanded ? "Hide 24-hour history" : "Show 24-hour history"}
+          </span>
+          <svg
+            class="history-toggle-icon"
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            aria-hidden="true"
+          >
+            <path
+              d="M6 9l6 6 6-6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></path>
+          </svg>
+        </div>
+        ${this.historyExpanded
           ? html`
-              <div class="chart-wrapper">
-                <div class="chart-label">Temperature (24h)</div>
-                <div class="chart-canvas-container">
-                  <canvas id="temp-chart"></canvas>
-                </div>
-              </div>
-            `
-          : ""}
-        ${showHumidityGraph
-          ? html`
-              <div class="chart-wrapper">
-                <div class="chart-label">Humidity (24h)</div>
-                <div class="chart-canvas-container">
-                  <canvas id="humidity-chart"></canvas>
-                </div>
+              <div class="charts-container">
+                ${showTemperatureGraph
+                  ? html`
+                      <div class="chart-wrapper">
+                        <div class="chart-label">Temperature (24h)</div>
+                        <div class="chart-canvas-container">
+                          <canvas id="temp-chart"></canvas>
+                        </div>
+                      </div>
+                    `
+                  : ""}
+                ${showHumidityGraph
+                  ? html`
+                      <div class="chart-wrapper">
+                        <div class="chart-label">Humidity (24h)</div>
+                        <div class="chart-canvas-container">
+                          <canvas id="humidity-chart"></canvas>
+                        </div>
+                      </div>
+                    `
+                  : ""}
               </div>
             `
           : ""}
