@@ -46,24 +46,28 @@ export const editorStyles = css`
 export const cardStyles = css`
   :host {
     display: block;
+    min-width: 0;
   }
 
   .card-content {
     display: flex;
     flex-direction: column;
-    padding: 24px;
+    padding: clamp(16px, 4vw, 24px);
     background: var(
       --ha-card-background,
       var(--card-background-color, #1a1a1a)
     );
     border-radius: 12px;
+    box-sizing: border-box;
   }
 
   .card-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 16px;
   }
 
   .card-title {
@@ -82,9 +86,9 @@ export const cardStyles = css`
 
   .comfort-dial-container {
     position: relative;
-    width: 300px;
-    height: 300px;
-    margin: 0 auto 32px;
+    width: min(var(--dial-size, 300px), 100%);
+    aspect-ratio: 1 / 1;
+    margin: 0 auto 24px;
   }
 
   .comfort-dial {
@@ -99,8 +103,8 @@ export const cardStyles = css`
 
   .dial-outer-ring {
     position: absolute;
-    width: 240px;
-    height: 240px;
+    width: 80%;
+    height: 80%;
     border-radius: 50%;
     border: 2px solid rgba(255, 255, 255, 0.2);
     top: 50%;
@@ -110,8 +114,8 @@ export const cardStyles = css`
 
   .dial-comfort-zone {
     position: absolute;
-    width: 120px;
-    height: 120px;
+    width: 40%;
+    height: 40%;
     border-radius: 50%;
     background: rgba(100, 200, 100, 0.15);
     border: 2px solid rgba(100, 200, 100, 0.4);
@@ -123,8 +127,8 @@ export const cardStyles = css`
 
   .comfort-indicator {
     position: absolute;
-    width: 24px;
-    height: 24px;
+    width: clamp(16px, calc(var(--dial-size, 300px) * 0.08), 24px);
+    height: clamp(16px, calc(var(--dial-size, 300px) * 0.08), 24px);
     border-radius: 50%;
     background: #ffffff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -144,33 +148,34 @@ export const cardStyles = css`
   }
 
   .label-top {
-    top: 20px;
+    top: 6%;
     left: 50%;
     transform: translateX(-50%);
   }
 
   .label-right {
-    right: 20px;
+    right: 6%;
     top: 50%;
     transform: translateY(-50%);
   }
 
   .label-bottom {
-    bottom: 20px;
+    bottom: 6%;
     left: 50%;
     transform: translateX(-50%);
   }
 
   .label-left {
-    left: 20px;
+    left: 6%;
     top: 50%;
     transform: translateY(-50%);
   }
 
   .readings {
     display: flex;
-    justify-content: space-around;
-    gap: 48px;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
   }
 
   .reading {
@@ -204,5 +209,42 @@ export const cardStyles = css`
   .warning-icon {
     font-size: 0.5em;
     color: var(--warning-color, #ff9800);
+  }
+
+  @media (max-width: 480px) {
+    .card-title {
+      font-size: 1.2em;
+    }
+
+    .status-badge {
+      font-size: 1em;
+    }
+
+    .readings {
+      gap: 24px;
+    }
+
+    .reading-value {
+      font-size: 2em;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .card-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .comfort-dial-container {
+      margin-bottom: 16px;
+    }
+
+    .readings {
+      gap: 16px;
+    }
+
+    .reading {
+      align-items: flex-start;
+    }
   }
 `;
