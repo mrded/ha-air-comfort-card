@@ -9,6 +9,9 @@ import "./air-comfort-card-editor";
 export class AirComfortCard extends LitElement implements LovelaceCard {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private config?: CardConfig;
+  @state() private dialSize = 280;
+
+  private resizeObserver?: ResizeObserver;
 
   static styles = cardStyles;
 
@@ -43,7 +46,48 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
   }
 
   public getCardSize(): number {
-    return 4;
+    return Math.max(3, Math.round(this.dialSize / 90));
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    if (typeof ResizeObserver !== "undefined") {
+      this.resizeObserver = new ResizeObserver(entries => {
+        const entry = entries[0];
+        if (!entry) {
+          return;
+        }
+        this.updateDialSize(entry.contentRect.width);
+      });
+      this.resizeObserver.observe(this);
+    }
+    this.updateDialSize(this.clientWidth);
+  }
+
+  disconnectedCallback(): void {
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = undefined;
+    super.disconnectedCallback();
+  }
+
+  private updateDialSize(width: number): void {
+    if (!width) {
+      return;
+    }
+    const horizontalPadding = 48; // card-content left + right padding
+    const maxDialSize = 320;
+    const minPreferredDial = 220;
+    const availableWidth = Math.max(0, width - horizontalPadding);
+    if (!availableWidth) {
+      return;
+    }
+    let newSize = Math.min(maxDialSize, availableWidth);
+    if (availableWidth >= minPreferredDial) {
+      newSize = Math.max(minPreferredDial, newSize);
+    }
+    if (Math.abs(newSize - this.dialSize) > 0.5) {
+      this.dialSize = newSize;
+    }
   }
 
   protected render() {
@@ -89,8 +133,8 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     } = calculateComfortZone(temperature, humidity);
 
     // Calculate indicator position
-    const innerRadius = 60;
-    const outerRadius = 120;
+    const innerRadius = this.dialSize * 0.2;
+    const outerRadius = this.dialSize * 0.4;
     const MAX_RADIAL_DISTANCE_SCALE = 1.5;
     const COMFORT_ZONE_VARIATION = 0.3;
 
@@ -118,7 +162,10 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
           <div class="status-badge">${statusText}</div>
         </div>
 
-        <div class="comfort-dial-container">
+        <div
+          class="comfort-dial-container"
+          style="--dial-size: ${this.dialSize}px;"
+        >
           <div class="comfort-dial">
             <div class="dial-outer-ring"></div>
             <div class="dial-comfort-zone"></div>

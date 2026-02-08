@@ -19,12 +19,46 @@
       margin-top: 0;
       font-weight: 400;
     }
+    .layout {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .cards-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .card-demo {
+      background: #1a1a1a;
+      padding: 16px;
+      border-radius: 12px;
+      flex: 1 1 220px;
+      max-width: 420px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .card-demo .demo-label {
+      margin: 0 0 12px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    .card-demo.small {
+      max-width: 240px;
+    }
+    .card-demo.medium {
+      max-width: 320px;
+    }
+    .card-demo.large {
+      max-width: 420px;
+    }
     .controls {
       background: #222;
       padding: 20px;
       border-radius: 12px;
       margin-bottom: 20px;
-      max-width: 400px;
+      max-width: 540px;
     }
     .control {
       margin-bottom: 15px;
@@ -43,7 +77,7 @@
     }
     air-comfort-card {
       display: block;
-      max-width: 400px;
+      width: 100%;
       --primary-text-color: #ffffff;
       --secondary-text-color: rgba(255, 255, 255, 0.6);
       --ha-card-background: #1e1e1e;
@@ -55,23 +89,42 @@
 <body>
   <h1>Air Comfort Card</h1>
 
-  <air-comfort-card></air-comfort-card>
-
-  <div class="controls">
-    <div class="control">
-      <label>Temperature: <strong id="temp-value">22</strong>°C</label>
-      <input type="range" id="temperature" min="10" max="35" value="22" step="0.5">
+  <div class="layout">
+    <div class="cards-grid">
+      <div class="card-demo small">
+        <p class="demo-label">Compact (1-2 columns)</p>
+        <air-comfort-card id="card-compact"></air-comfort-card>
+      </div>
+      <div class="card-demo medium">
+        <p class="demo-label">Standard (2-3 columns)</p>
+        <air-comfort-card id="card-standard"></air-comfort-card>
+      </div>
+      <div class="card-demo large">
+        <p class="demo-label">Wide (full-width)</p>
+        <air-comfort-card id="card-wide"></air-comfort-card>
+      </div>
     </div>
-    <div class="control">
-      <label>Humidity: <strong id="humidity-value">50</strong>%</label>
-      <input type="range" id="humidity" min="10" max="90" value="50">
+
+    <div class="controls">
+      <div class="control">
+        <label>Temperature: <strong id="temp-value">22</strong>°C</label>
+        <input type="range" id="temperature" min="10" max="35" value="22" step="0.5">
+      </div>
+      <div class="control">
+        <label>Humidity: <strong id="humidity-value">50</strong>%</label>
+        <input type="range" id="humidity" min="10" max="90" value="50">
+      </div>
     </div>
   </div>
 
   <script type="module">
     import './dist/air-comfort-card.js';
 
-    const card = document.querySelector('air-comfort-card');
+    const cards = [
+      { element: document.getElementById('card-compact'), name: 'Compact Slot' },
+      { element: document.getElementById('card-standard'), name: 'Standard Slot' },
+      { element: document.getElementById('card-wide'), name: 'Wide Slot' }
+    ];
     const tempSlider = document.getElementById('temperature');
     const humiditySlider = document.getElementById('humidity');
     const tempValue = document.getElementById('temp-value');
@@ -93,11 +146,16 @@
       };
     }
 
-    card.setConfig({
-      type: 'custom:air-comfort-card',
-      temperature_entity: 'sensor.temperature',
-      humidity_entity: 'sensor.humidity',
-      name: 'Living Room'
+    cards.forEach(({ element, name }) => {
+      if (!element) {
+        return;
+      }
+      element.setConfig({
+        type: 'custom:air-comfort-card',
+        temperature_entity: 'sensor.temperature',
+        humidity_entity: 'sensor.humidity',
+        name
+      });
     });
 
     function update() {
@@ -105,7 +163,11 @@
       const humidity = parseInt(humiditySlider.value);
       tempValue.textContent = temp;
       humidityValue.textContent = humidity;
-      card.hass = createHass(temp, humidity);
+      cards.forEach(({ element }) => {
+        if (element) {
+          element.hass = createHass(temp, humidity);
+        }
+      });
     }
 
     tempSlider.addEventListener('input', update);
