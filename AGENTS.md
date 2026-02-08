@@ -1,7 +1,13 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Custom card logic lives in `src/air-comfort-card.ts`, a single LitElement that renders the comfort dial and editor. Bundled output is emitted to `dist/air-comfort-card.js` via Rollup; only files in `dist/` and `hacs.json` are shipped to Home Assistant. Build tooling (`rollup.config.js`, `tsconfig.json`) sits in the root, along with documentation (`README.md`, `info.md`) and marketing assets such as `screenshot.png`. Use `public/index.html` as a lightweight playground to load the card outside Home Assistant while developing.
+Custom card logic lives in `src/air-comfort-card.ts`, a single LitElement that renders the comfort dial, editor, and 24-hour history charts using Chart.js. Bundled output is emitted to `dist/air-comfort-card.js` via Rollup; only files in `dist/` and `hacs.json` are shipped to Home Assistant. Build tooling (`rollup.config.js`, `tsconfig.json`) sits in the root, along with documentation (`README.md`, `info.md`) and marketing assets such as `screenshot.png`. Use `public/index.html` as a lightweight playground to load the card outside Home Assistant while developing.
+
+### Key Dependencies
+- **Lit 2**: Web component framework for the card UI
+- **Chart.js**: Renders 24-hour temperature and humidity history line charts
+- **chartjs-adapter-date-fns**: Date adapter for Chart.js time scale
+- **date-fns**: Date utilities used by the chart adapter
 
 ## Build, Test, and Development Commands
 - `bun install` (or `npm install`): install dependencies defined in `package.json`.
