@@ -120,6 +120,9 @@
   <script type="module">
     import './dist/air-comfort-card.js';
 
+    const HISTORY_HOURS = 24;
+    const ONE_HOUR = 60 * 60 * 1000;
+
     const cards = [
       { element: document.getElementById('card-compact'), name: 'Compact Slot' },
       { element: document.getElementById('card-standard'), name: 'Standard Slot' },
@@ -130,7 +133,67 @@
     const tempValue = document.getElementById('temp-value');
     const humidityValue = document.getElementById('humidity-value');
 
+    function createMockSeries(latestValue, options) {
+      const { baseline, amplitude, drift = 0, secondaryAmplitude = 0, frequency = 1 } = options;
+      const now = Date.now();
+      const baseAtProgress = progress => {
+        return (
+          baseline +
+          Math.sin(progress * Math.PI * 2 * frequency) * amplitude +
+          Math.cos(progress * Math.PI * 4 * frequency) * secondaryAmplitude +
+          (progress - 0.5) * drift
+        );
+      };
+      const baseAtNow = baseAtProgress(1);
+      const offset = latestValue - baseAtNow;
+      const samples = [];
+      for (let i = HISTORY_HOURS; i >= 0; i--) {
+        const progress = 1 - i / HISTORY_HOURS;
+        const time = new Date(now - i * ONE_HOUR);
+        const value = baseAtProgress(progress) + offset;
+        samples.push({
+          time,
+          value: parseFloat(value.toFixed(1))
+        });
+      }
+      samples[samples.length - 1].value = parseFloat(latestValue.toFixed(1));
+      return samples;
+    }
+
+    function formatHistory(series, entityId) {
+      return series.map(point => ({
+        entity_id: entityId,
+        state: point.value.toFixed(1),
+        last_changed: point.time.toISOString(),
+        last_updated: point.time.toISOString()
+      }));
+    }
+
+    function buildHistoryPayload(temperature, humidity) {
+      const temperatureSeries = createMockSeries(temperature, {
+        baseline: 22,
+        amplitude: 2.8,
+        drift: 1.5,
+        secondaryAmplitude: 0.5,
+        frequency: 1
+      });
+      const humiditySeries = createMockSeries(humidity, {
+        baseline: 48,
+        amplitude: 7,
+        drift: -5,
+        secondaryAmplitude: 2,
+        frequency: 0.6
+      });
+      return [
+        formatHistory(temperatureSeries, 'sensor.temperature'),
+        formatHistory(humiditySeries, 'sensor.humidity')
+      ];
+    }
+
+    let latestHistoryResponse = buildHistoryPayload(22, 50);
+
     function createHass(temperature, humidity) {
+      latestHistoryResponse = buildHistoryPayload(temperature, humidity);
       return {
         states: {
           'sensor.temperature': {
@@ -142,7 +205,8 @@
             attributes: { unit_of_measurement: '%' }
           }
         },
-        callService: async () => {}
+        callService: async () => {},
+        callApi: async () => latestHistoryResponse
       };
     }
 
@@ -166,6 +230,8 @@
       cards.forEach(({ element }) => {
         if (element) {
           element.hass = createHass(temp, humidity);
+          element.lastHistoryFetch = 0;
+          element.fetchHistory?.(); // Pull mock history so charts render in the playground
         }
       });
     }
