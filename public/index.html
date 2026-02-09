@@ -123,11 +123,11 @@
     <div class="controls">
       <div class="control">
         <label>Temperature: <strong id="temp-value">22</strong>°C</label>
-        <input type="range" id="temperature" min="10" max="35" value="22" step="0.5">
+        <input type="range" id="temperature" min="10" max="35" value="22" step="0.1">
       </div>
       <div class="control">
         <label>Humidity: <strong id="humidity-value">50</strong>%</label>
-        <input type="range" id="humidity" min="10" max="90" value="50">
+        <input type="range" id="humidity" min="10" max="90" value="50" step="0.1">
       </div>
       <div class="control">
         <label>Card Options</label>
@@ -160,9 +160,6 @@
   <script type="module">
     import './dist/air-comfort-card.js';
 
-    const HISTORY_HOURS = 24;
-    const ONE_HOUR = 60 * 60 * 1000;
-
     const cards = [
       { element: document.getElementById('card-compact'), name: 'Compact Slot' },
       { element: document.getElementById('card-standard'), name: 'Standard Slot' },
@@ -172,75 +169,18 @@
     const humiditySlider = document.getElementById('humidity');
     const tempValue = document.getElementById('temp-value');
     const humidityValue = document.getElementById('humidity-value');
-
-    function createMockSeries(latestValue, options) {
-      const { baseline, amplitude, drift = 0, secondaryAmplitude = 0, frequency = 1 } = options;
-      const now = Date.now();
-      const baseAtProgress = progress => {
-        return (
-          baseline +
-          Math.sin(progress * Math.PI * 2 * frequency) * amplitude +
-          Math.cos(progress * Math.PI * 4 * frequency) * secondaryAmplitude +
-          (progress - 0.5) * drift
-        );
-      };
-      const baseAtNow = baseAtProgress(1);
-      const offset = latestValue - baseAtNow;
-      const samples = [];
-      for (let i = HISTORY_HOURS; i >= 0; i--) {
-        const progress = 1 - i / HISTORY_HOURS;
-        const time = new Date(now - i * ONE_HOUR);
-        const value = baseAtProgress(progress) + offset;
-        samples.push({
-          time,
-          value: parseFloat(value.toFixed(1))
-        });
-      }
-      samples[samples.length - 1].value = parseFloat(latestValue.toFixed(1));
-      return samples;
-    }
-
-    function formatHistory(series, entityId) {
-      return series.map(point => ({
-        entity_id: entityId,
-        state: point.value.toFixed(1),
-        last_changed: point.time.toISOString(),
-        last_updated: point.time.toISOString()
-      }));
-    }
-
-    function buildHistoryPayload(temperature, humidity) {
-      const temperatureSeries = createMockSeries(temperature, {
-        baseline: 22,
-        amplitude: 2.8,
-        drift: 1.5,
-        secondaryAmplitude: 0.5,
-        frequency: 1
-      });
-      const humiditySeries = createMockSeries(humidity, {
-        baseline: 48,
-        amplitude: 7,
-        drift: -5,
-        secondaryAmplitude: 2,
-        frequency: 0.6
-      });
-      return [
-        formatHistory(temperatureSeries, 'sensor.temperature'),
-        formatHistory(humiditySeries, 'sensor.humidity')
-      ];
-    }
-
-    let latestHistoryResponse = buildHistoryPayload(22, 50);
+    let latestHistoryResponse = [];
+    let temperatureEntityId = 'sensor.temperature';
+    let humidityEntityId = 'sensor.humidity';
 
     function createHass(temperature, humidity) {
-      latestHistoryResponse = buildHistoryPayload(temperature, humidity);
       return {
         states: {
-          'sensor.temperature': {
+          [temperatureEntityId]: {
             state: String(temperature),
             attributes: { unit_of_measurement: '°C' }
           },
-          'sensor.humidity': {
+          [humidityEntityId]: {
             state: String(humidity),
             attributes: { unit_of_measurement: '%' }
           }
@@ -265,8 +205,8 @@
         }
         element.setConfig({
           type: 'custom:air-comfort-card',
-          temperature_entity: 'sensor.temperature',
-          humidity_entity: 'sensor.humidity',
+          temperature_entity: temperatureEntityId,
+          humidity_entity: humidityEntityId,
           name,
           ...settings
         });
@@ -276,9 +216,9 @@
 
     function update() {
       const temp = parseFloat(tempSlider.value);
-      const humidity = parseInt(humiditySlider.value);
-      tempValue.textContent = temp;
-      humidityValue.textContent = humidity;
+      const humidity = parseFloat(humiditySlider.value);
+      tempValue.textContent = temp.toFixed(1);
+      humidityValue.textContent = humidity.toFixed(1);
       cards.forEach(({ element }) => {
         if (element) {
           element.hass = createHass(temp, humidity);
@@ -307,7 +247,64 @@
         });
       });
 
-    applyConfig();
+    function getLatestHistoryValue(series) {
+      if (!Array.isArray(series)) {
+        return undefined;
+      }
+      for (let i = series.length - 1; i >= 0; i--) {
+        const value = parseFloat(series[i]?.state);
+        if (!isNaN(value)) {
+          return value;
+        }
+      }
+      return undefined;
+    }
+
+    function applyHistoryDefaults(temperatureHistory, humidityHistory) {
+      const latestTemp = getLatestHistoryValue(temperatureHistory);
+      if (typeof latestTemp === 'number') {
+        const rounded = latestTemp.toFixed(1);
+        tempSlider.value = rounded;
+        tempValue.textContent = rounded;
+      }
+      const latestHumidity = getLatestHistoryValue(humidityHistory);
+      if (typeof latestHumidity === 'number') {
+        const rounded = latestHumidity.toFixed(1);
+        humiditySlider.value = rounded;
+        humidityValue.textContent = rounded;
+      }
+    }
+
+    async function loadMockHistory() {
+      try {
+        const response = await fetch('mock.json');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error('Mock history should be an array of entity histories');
+        }
+        latestHistoryResponse = data;
+        const [temperatureHistory = [], humidityHistory = []] = data;
+        if (temperatureHistory[0]?.entity_id) {
+          temperatureEntityId = temperatureHistory[0].entity_id;
+        }
+        if (humidityHistory[0]?.entity_id) {
+          humidityEntityId = humidityHistory[0].entity_id;
+        }
+        applyHistoryDefaults(temperatureHistory, humidityHistory);
+      } catch (error) {
+        console.error('Failed to load mock history data:', error);
+      }
+    }
+
+    async function init() {
+      await loadMockHistory();
+      applyConfig();
+    }
+
+    init();
   </script>
 </body>
 </html>
