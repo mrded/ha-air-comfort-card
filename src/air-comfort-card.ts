@@ -270,7 +270,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
             },
             ticks: {
               color: "rgba(255,255,255,0.6)",
-              callback: value => `${value}${unit}`
+              callback: value => `${Math.round(Number(value))}${unit}`
             }
           }
         }
