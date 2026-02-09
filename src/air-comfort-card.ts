@@ -1,6 +1,11 @@
 import { LitElement, html, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Chart, ChartConfiguration, registerables } from "chart.js";
+import {
+  Chart,
+  ChartConfiguration,
+  registerables,
+  ScatterDataPoint
+} from "chart.js";
 import "chartjs-adapter-date-fns";
 import { CardConfig, HomeAssistant, HistoryState, LovelaceCard } from "./types";
 import { cardStyles } from "./styles";
@@ -177,14 +182,18 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     color: string,
     unit: string
   ): ChartConfiguration {
+    const datasetPoints: ScatterDataPoint[] = data.map(point => ({
+      x: point.time.getTime(),
+      y: point.value
+    }));
+
     return {
       type: "line",
       data: {
-        labels: data.map(p => p.time),
         datasets: [
           {
             label,
-            data: data.map(p => p.value),
+            data: datasetPoints,
             borderColor: color,
             backgroundColor: color + "33",
             fill: true,
@@ -208,7 +217,25 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
           tooltip: {
             callbacks: {
               title: tooltipItems => {
-                const date = new Date(tooltipItems[0].label);
+                const tooltipItem = tooltipItems[0];
+                if (!tooltipItem) {
+                  return "";
+                }
+                const parsedX = tooltipItem.parsed.x;
+                const timestamp =
+                  typeof parsedX === "number"
+                    ? parsedX
+                    : typeof (tooltipItem.raw as { x?: number })?.x ===
+                      "number"
+                    ? (tooltipItem.raw as { x: number }).x
+                    : undefined;
+                if (typeof timestamp !== "number") {
+                  return "";
+                }
+                const date = new Date(timestamp);
+                if (Number.isNaN(date.getTime())) {
+                  return "";
+                }
                 return date.toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit"
