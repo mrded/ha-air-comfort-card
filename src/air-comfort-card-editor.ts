@@ -21,31 +21,22 @@ export class AirComfortCardEditor extends LitElement {
   }
 
   private async _loadEntityPicker(): Promise<void> {
-    console.log("[air-comfort-editor] _loadEntityPicker started");
-    console.log("[air-comfort-editor] ha-entity-picker already defined?", !!customElements.get("ha-entity-picker"));
-
     if (customElements.get("ha-entity-picker")) {
       this._entityPickerAvailable = true;
       return;
     }
 
     try {
-      console.log("[air-comfort-editor] loadCardHelpers available?", !!(window as any).loadCardHelpers);
       const helpers = await (window as any).loadCardHelpers?.();
-      console.log("[air-comfort-editor] helpers result:", helpers);
       if (helpers) {
         const card = await helpers.createCardElement({ type: "entities", entities: [] });
-        console.log("[air-comfort-editor] created entities card:", card);
         if (card) {
-          const configEl = await card.constructor?.getConfigElement?.();
-          console.log("[air-comfort-editor] getConfigElement result:", configEl);
+          await card.constructor?.getConfigElement?.();
         }
       }
-    } catch (err) {
-      console.error("[air-comfort-editor] loadCardHelpers error:", err);
+    } catch {
+      // ignore
     }
-
-    console.log("[air-comfort-editor] ha-entity-picker defined after helpers?", !!customElements.get("ha-entity-picker"));
 
     if (customElements.get("ha-entity-picker")) {
       this._entityPickerAvailable = true;
@@ -53,16 +44,13 @@ export class AirComfortCardEditor extends LitElement {
     }
 
     // Wait up to 3 seconds for the element to appear
-    console.log("[air-comfort-editor] waiting up to 3s for ha-entity-picker...");
     try {
       await Promise.race([
         customElements.whenDefined("ha-entity-picker"),
         new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000))
       ]);
-      console.log("[air-comfort-editor] ha-entity-picker became available!");
       this._entityPickerAvailable = true;
     } catch {
-      console.warn("[air-comfort-editor] ha-entity-picker NOT available after 3s, using text input fallback");
       this._entityPickerAvailable = false;
     }
   }
