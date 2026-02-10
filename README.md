@@ -74,9 +74,6 @@ type: custom:air-comfort-card
 temperature_entity: sensor.living_room_temperature
 humidity_entity: sensor.living_room_humidity
 name: Living Room Comfort
-show_temperature: true
-show_humidity: true
-show_comfort_level: true
 show_temperature_graph: true
 show_humidity_graph: true
 ```
@@ -89,9 +86,6 @@ show_humidity_graph: true
 | `temperature_entity` | string | **Yes** | - | Entity ID of your temperature sensor |
 | `humidity_entity` | string | **Yes** | - | Entity ID of your humidity sensor |
 | `name` | string | No | `Air Comfort` | Custom title for the card (editable via visual editor) |
-| `show_temperature` | boolean | No | `true` | Show/hide temperature reading |
-| `show_humidity` | boolean | No | `true` | Show/hide humidity reading |
-| `show_comfort_level` | boolean | No | `true` | Show/hide comfort level text |
 | `show_temperature_graph` | boolean | No | `true` | Show/hide the 24-hour temperature graph |
 | `show_humidity_graph` | boolean | No | `true` | Show/hide the 24-hour humidity graph |
 

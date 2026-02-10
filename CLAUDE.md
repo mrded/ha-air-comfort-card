@@ -52,3 +52,15 @@ The card fetches 24-hour history data from Home Assistant's history API and disp
 ### Home Assistant Integration
 
 The card registers itself via `customCards` array and implements the standard Lovelace card interface (`setConfig`, `getCardSize`, `getConfigElement`). It uses `ha-entity-picker` components in the editor for entity selection. History data is fetched via `hass.callApi()` using the Home Assistant history API.
+
+## Checklist: Adding or Removing a Card Setting
+
+When a configuration option (e.g. `show_temperature_graph`) is added, removed, or renamed, update **all** of these locations:
+
+1. **`src/types.ts`** — `CardConfig` interface (add/remove the property)
+2. **`src/air-comfort-card.ts`** — `getStubConfig()` default values and `setConfig()` defaults
+3. **`src/air-comfort-card.ts`** — `render()` / `renderCharts()` (use the setting to conditionally show/hide UI)
+4. **`src/air-comfort-card-editor.ts`** — editor checkbox / input in `render()` (add/remove the control)
+5. **`public/index.html`** — `settings` object and the matching checkbox in the HTML controls
+6. **`README.md`** — "Full Configuration" YAML example and "Configuration Options" table
+7. **`info.md`** — "Full Example" YAML block

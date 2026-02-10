@@ -41,9 +41,6 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       type: "custom:air-comfort-card",
       temperature_entity: "sensor.temperature",
       humidity_entity: "sensor.humidity",
-      show_temperature: true,
-      show_humidity: true,
-      show_comfort_level: true,
       show_temperature_graph: true,
       show_humidity_graph: true
     };
@@ -61,9 +58,6 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       throw new Error("You need to define a humidity_entity");
     }
     this.config = {
-      show_temperature: true,
-      show_humidity: true,
-      show_comfort_level: true,
       show_temperature_graph: true,
       show_humidity_graph: true,
       ...config

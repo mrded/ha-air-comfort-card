@@ -58,36 +58,6 @@ export class AirComfortCardEditor extends LitElement {
 
         <div class="checkbox-option">
           <input
-            id="show_temperature"
-            type="checkbox"
-            .checked=${config.show_temperature !== false}
-            @change=${this._valueChanged}
-          />
-          <label for="show_temperature">Show Temperature</label>
-        </div>
-
-        <div class="checkbox-option">
-          <input
-            id="show_humidity"
-            type="checkbox"
-            .checked=${config.show_humidity !== false}
-            @change=${this._valueChanged}
-          />
-          <label for="show_humidity">Show Humidity</label>
-        </div>
-
-        <div class="checkbox-option">
-          <input
-            id="show_comfort_level"
-            type="checkbox"
-            .checked=${config.show_comfort_level !== false}
-            @change=${this._valueChanged}
-          />
-          <label for="show_comfort_level">Show Comfort Level</label>
-        </div>
-
-        <div class="checkbox-option">
-          <input
             id="show_temperature_graph"
             type="checkbox"
             .checked=${config.show_temperature_graph !== false}
