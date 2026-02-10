@@ -14,6 +14,23 @@ export class AirComfortCardEditor extends LitElement {
     this.config = config;
   }
 
+  public connectedCallback(): void {
+    super.connectedCallback();
+    void this._loadEntityPicker();
+  }
+
+  private async _loadEntityPicker(): Promise<void> {
+    if (customElements.get("ha-entity-picker")) {
+      return;
+    }
+    const helpers = await (window as any).loadCardHelpers?.();
+    if (!helpers) {
+      return;
+    }
+    // Creating an entities card triggers HA to load ha-entity-picker
+    await helpers.createCardElement({ type: "entities", entities: [] });
+  }
+
   protected render() {
     if (!this.config) {
       return html``;
