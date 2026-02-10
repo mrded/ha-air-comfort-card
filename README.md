@@ -12,10 +12,11 @@ A custom Home Assistant card that visualizes indoor air comfort using temperatur
 - 🎯 **Circular Comfort Dial**: Visual representation of comfort zones with color-coded regions
 - 📍 **Moving Indicator**: Dynamic dot that shows current conditions on the dial
 - 🌡️ **Temperature & Humidity Display**: Clear readings with customizable units
+- 📊 **24-Hour History Charts**: Line graphs showing temperature and humidity trends over the last 24 hours
 - 🎨 **Theme-Aware**: Automatically adapts to your Home Assistant theme
 - ⚙️ **Configurable**: Customize visibility of different elements via YAML
 - 🧹 **Clean & Intuitive**: Modern design inspired by thermostat apps
-- 🔧 **TypeScript + Lit**: Built with modern web technologies
+- 🔧 **TypeScript + Lit + Chart.js**: Built with modern web technologies
 
 ## Installation
 
@@ -76,6 +77,8 @@ name: Living Room Comfort
 show_temperature: true
 show_humidity: true
 show_comfort_level: true
+show_temperature_graph: true
+show_humidity_graph: true
 ```
 
 ### Configuration Options
@@ -89,6 +92,8 @@ show_comfort_level: true
 | `show_temperature` | boolean | No | `true` | Show/hide temperature reading |
 | `show_humidity` | boolean | No | `true` | Show/hide humidity reading |
 | `show_comfort_level` | boolean | No | `true` | Show/hide comfort level text |
+| `show_temperature_graph` | boolean | No | `true` | Show/hide the 24-hour temperature graph |
+| `show_humidity_graph` | boolean | No | `true` | Show/hide the 24-hour humidity graph |
 
 ## How It Works
 

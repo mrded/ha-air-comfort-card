@@ -247,4 +247,68 @@ export const cardStyles = css`
       align-items: flex-start;
     }
   }
+
+  .history-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .history-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9em;
+    color: var(--primary-text-color, #ffffff);
+    cursor: pointer;
+  }
+
+  .history-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-color, #4dabf7);
+    border-radius: 8px;
+  }
+
+  .history-toggle-icon {
+    transition: transform 0.3s ease;
+  }
+
+  .history-toggle[aria-expanded="true"] .history-toggle-icon {
+    transform: rotate(180deg);
+  }
+
+  .charts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 0;
+  }
+
+  .chart-wrapper {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chart-label {
+    font-size: 0.75em;
+    color: var(--secondary-text-color, rgba(255, 255, 255, 0.6));
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .chart-canvas-container {
+    position: relative;
+    height: 120px;
+    width: 100%;
+  }
+
+  .chart-canvas-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
 `;

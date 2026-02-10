@@ -1,17 +1,38 @@
-import { LitElement, html } from "lit";
+import { LitElement, html, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { CardConfig, HomeAssistant, LovelaceCard } from "./types";
+import {
+  Chart,
+  ChartConfiguration,
+  registerables,
+  ScatterDataPoint
+} from "chart.js";
+import "chartjs-adapter-date-fns";
+import { CardConfig, HomeAssistant, HistoryState, LovelaceCard } from "./types";
 import { cardStyles } from "./styles";
 import { calculateComfortZone } from "./comfort-zone";
 import "./air-comfort-card-editor";
+
+Chart.register(...registerables);
+
+interface ChartDataPoint {
+  time: Date;
+  value: number;
+}
 
 @customElement("air-comfort-card")
 export class AirComfortCard extends LitElement implements LovelaceCard {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private config?: CardConfig;
   @state() private dialSize = 280;
+  @state() private temperatureHistory: ChartDataPoint[] = [];
+  @state() private humidityHistory: ChartDataPoint[] = [];
+  @state() private historyExpanded = false;
 
   private resizeObserver?: ResizeObserver;
+  private temperatureChart?: Chart;
+  private humidityChart?: Chart;
+  private historyFetchInterval?: number;
+  private lastHistoryFetch = 0;
 
   static styles = cardStyles;
 
@@ -22,7 +43,9 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       humidity_entity: "sensor.humidity",
       show_temperature: true,
       show_humidity: true,
-      show_comfort_level: true
+      show_comfort_level: true,
+      show_temperature_graph: true,
+      show_humidity_graph: true
     };
   }
 
@@ -41,6 +64,8 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       show_temperature: true,
       show_humidity: true,
       show_comfort_level: true,
+      show_temperature_graph: true,
+      show_humidity_graph: true,
       ...config
     };
   }
@@ -62,12 +87,256 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       this.resizeObserver.observe(this);
     }
     this.updateDialSize(this.clientWidth);
+    this.fetchHistory();
+    this.historyFetchInterval = window.setInterval(() => {
+      this.fetchHistory();
+    }, 5 * 60 * 1000); // Refresh every 5 minutes
   }
 
   disconnectedCallback(): void {
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;
+    if (this.historyFetchInterval) {
+      clearInterval(this.historyFetchInterval);
+    }
+    this.destroyCharts();
     super.disconnectedCallback();
+  }
+
+  protected updated(changedProperties: PropertyValues): void {
+    super.updated(changedProperties);
+    const chartDataChanged =
+      changedProperties.has("temperatureHistory") ||
+      changedProperties.has("humidityHistory") ||
+      changedProperties.has("config");
+
+    if (changedProperties.has("historyExpanded")) {
+      if (this.historyExpanded) {
+        this.updateCharts();
+      } else {
+        this.destroyCharts();
+      }
+    } else if (this.historyExpanded && chartDataChanged) {
+      this.updateCharts();
+    }
+  }
+
+  private destroyCharts(): void {
+    this.temperatureChart?.destroy();
+    this.temperatureChart = undefined;
+    this.humidityChart?.destroy();
+    this.humidityChart = undefined;
+  }
+
+  private async fetchHistory(): Promise<void> {
+    if (!this.hass || !this.config) {
+      return;
+    }
+
+    // Debounce: don't fetch more than once per minute
+    const now = Date.now();
+    if (now - this.lastHistoryFetch < 60000) {
+      return;
+    }
+    this.lastHistoryFetch = now;
+
+    const endTime = new Date();
+    const startTime = new Date(endTime.getTime() - 24 * 60 * 60 * 1000);
+
+    try {
+      const history = await this.hass.callApi<HistoryState[][]>(
+        "GET",
+        `history/period/${startTime.toISOString()}?filter_entity_id=${this.config.temperature_entity},${this.config.humidity_entity}&end_time=${endTime.toISOString()}&minimal_response&no_attributes`
+      );
+
+      if (!history || history.length === 0) {
+        return;
+      }
+
+      for (const entityHistory of history) {
+        if (entityHistory.length === 0) continue;
+
+        const points: ChartDataPoint[] = entityHistory
+          .filter(s => !isNaN(parseFloat(s.state)))
+          .map(s => ({
+            time: new Date(s.last_changed),
+            value: parseFloat(s.state)
+          }));
+
+        // Determine which entity this is by checking the entity_id in the first record
+        const firstRecord = entityHistory[0] as any;
+        if (firstRecord.entity_id === this.config.temperature_entity) {
+          this.temperatureHistory = points;
+        } else if (firstRecord.entity_id === this.config.humidity_entity) {
+          this.humidityHistory = points;
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching history:", e);
+    }
+  }
+
+  private getChartConfig(
+    data: ChartDataPoint[],
+    label: string,
+    color: string,
+    unit: string
+  ): ChartConfiguration {
+    const datasetPoints: ScatterDataPoint[] = data.map(point => ({
+      x: point.time.getTime(),
+      y: point.value
+    }));
+
+    return {
+      type: "line",
+      data: {
+        datasets: [
+          {
+            label,
+            data: datasetPoints,
+            borderColor: color,
+            backgroundColor: color + "33",
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            borderWidth: 2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          intersect: false,
+          mode: "index"
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              title: tooltipItems => {
+                const tooltipItem = tooltipItems[0];
+                if (!tooltipItem) {
+                  return "";
+                }
+                const parsedX = tooltipItem.parsed.x;
+                const timestamp =
+                  typeof parsedX === "number"
+                    ? parsedX
+                    : typeof (tooltipItem.raw as { x?: number })?.x ===
+                      "number"
+                    ? (tooltipItem.raw as { x: number }).x
+                    : undefined;
+                if (typeof timestamp !== "number") {
+                  return "";
+                }
+                const date = new Date(timestamp);
+                if (Number.isNaN(date.getTime())) {
+                  return "";
+                }
+                return date.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit"
+                });
+              },
+              label: context => {
+                return `${context.parsed.y?.toFixed(1) ?? ""}${unit}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: "time",
+            time: {
+              unit: "hour",
+              displayFormats: {
+                hour: "HH:mm"
+              }
+            },
+            grid: {
+              color: "rgba(255,255,255,0.1)"
+            },
+            ticks: {
+              color: "rgba(255,255,255,0.6)",
+              maxTicksLimit: 6
+            }
+          },
+          y: {
+            grid: {
+              color: "rgba(255,255,255,0.1)"
+            },
+            ticks: {
+              color: "rgba(255,255,255,0.6)",
+              callback: value => `${Math.round(Number(value))}${unit}`
+            }
+          }
+        }
+      }
+    };
+  }
+
+  private updateCharts(): void {
+    const tempCanvas = this.shadowRoot?.getElementById(
+      "temp-chart"
+    ) as HTMLCanvasElement | null;
+    const humidityCanvas = this.shadowRoot?.getElementById(
+      "humidity-chart"
+    ) as HTMLCanvasElement | null;
+
+    if (!tempCanvas && this.temperatureChart) {
+      this.temperatureChart.destroy();
+      this.temperatureChart = undefined;
+    }
+    if (!humidityCanvas && this.humidityChart) {
+      this.humidityChart.destroy();
+      this.humidityChart = undefined;
+    }
+
+    if (!tempCanvas && !humidityCanvas) {
+      return;
+    }
+
+    const tempState = this.hass?.states[this.config?.temperature_entity || ""];
+    const humidityState = this.hass?.states[
+      this.config?.humidity_entity || ""
+    ];
+    const tempUnit = tempState?.attributes.unit_of_measurement || "°C";
+    const humidityUnit = humidityState?.attributes.unit_of_measurement || "%";
+
+    // Update or create temperature chart
+    if (tempCanvas && this.temperatureHistory.length > 0) {
+      const tempConfig = this.getChartConfig(
+        this.temperatureHistory,
+        "Temperature",
+        "#ff6b6b",
+        tempUnit
+      );
+      if (this.temperatureChart) {
+        this.temperatureChart.data = tempConfig.data;
+        this.temperatureChart.update("none");
+      } else {
+        this.temperatureChart = new Chart(tempCanvas, tempConfig);
+      }
+    }
+
+    // Update or create humidity chart
+    if (humidityCanvas && this.humidityHistory.length > 0) {
+      const humidityConfig = this.getChartConfig(
+        this.humidityHistory,
+        "Humidity",
+        "#4dabf7",
+        humidityUnit
+      );
+      if (this.humidityChart) {
+        this.humidityChart.data = humidityConfig.data;
+        this.humidityChart.update("none");
+      } else {
+        this.humidityChart = new Chart(humidityCanvas, humidityConfig);
+      }
+    }
   }
 
   private updateDialSize(width: number): void {
@@ -205,6 +474,88 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
             </div>
           </div>
         </div>
+
+    ${this.renderCharts()}
+  </div>
+`;
+  }
+
+  private toggleHistory(): void {
+    this.historyExpanded = !this.historyExpanded;
+  }
+
+  private handleHistoryToggleKeyDown(event: KeyboardEvent): void {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      this.toggleHistory();
+    }
+  }
+
+  private renderCharts() {
+    if (!this.config) {
+      return null;
+    }
+    const showTemperatureGraph = this.config.show_temperature_graph !== false;
+    const showHumidityGraph = this.config.show_humidity_graph !== false;
+    if (!showTemperatureGraph && !showHumidityGraph) {
+      return null;
+    }
+    return html`
+      <div class="history-section">
+        <div
+          class="history-toggle"
+          role="button"
+          tabindex="0"
+          aria-expanded="${this.historyExpanded}"
+          @click=${this.toggleHistory}
+          @keydown=${this.handleHistoryToggleKeyDown}
+        >
+          <span>
+            ${this.historyExpanded ? "Hide 24-hour history" : "Show 24-hour history"}
+          </span>
+          <svg
+            class="history-toggle-icon"
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            aria-hidden="true"
+          >
+            <path
+              d="M6 9l6 6 6-6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></path>
+          </svg>
+        </div>
+        ${this.historyExpanded
+          ? html`
+              <div class="charts-container">
+                ${showTemperatureGraph
+                  ? html`
+                      <div class="chart-wrapper">
+                        <div class="chart-label">Temperature (24h)</div>
+                        <div class="chart-canvas-container">
+                          <canvas id="temp-chart"></canvas>
+                        </div>
+                      </div>
+                    `
+                  : ""}
+                ${showHumidityGraph
+                  ? html`
+                      <div class="chart-wrapper">
+                        <div class="chart-label">Humidity (24h)</div>
+                        <div class="chart-canvas-container">
+                          <canvas id="humidity-chart"></canvas>
+                        </div>
+                      </div>
+                    `
+                  : ""}
+              </div>
+            `
+          : ""}
       </div>
     `;
   }
