@@ -1,4 +1,4 @@
-import { LitElement, html } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { CardConfig, HomeAssistant } from "./types";
 import { editorStyles } from "./styles";
@@ -7,6 +7,7 @@ import { editorStyles } from "./styles";
 export class AirComfortCardEditor extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private config?: CardConfig;
+  @state() private _entityPickerAvailable = false;
 
   static styles = editorStyles;
 
@@ -20,15 +21,84 @@ export class AirComfortCardEditor extends LitElement {
   }
 
   private async _loadEntityPicker(): Promise<void> {
+    console.log("[air-comfort-editor] _loadEntityPicker started");
+    console.log("[air-comfort-editor] ha-entity-picker already defined?", !!customElements.get("ha-entity-picker"));
+
     if (customElements.get("ha-entity-picker")) {
+      this._entityPickerAvailable = true;
       return;
     }
-    const helpers = await (window as any).loadCardHelpers?.();
-    if (!helpers) {
+
+    try {
+      console.log("[air-comfort-editor] loadCardHelpers available?", !!(window as any).loadCardHelpers);
+      const helpers = await (window as any).loadCardHelpers?.();
+      console.log("[air-comfort-editor] helpers result:", helpers);
+      if (helpers) {
+        const card = await helpers.createCardElement({ type: "entities", entities: [] });
+        console.log("[air-comfort-editor] created entities card:", card);
+        if (card) {
+          const configEl = await card.constructor?.getConfigElement?.();
+          console.log("[air-comfort-editor] getConfigElement result:", configEl);
+        }
+      }
+    } catch (err) {
+      console.error("[air-comfort-editor] loadCardHelpers error:", err);
+    }
+
+    console.log("[air-comfort-editor] ha-entity-picker defined after helpers?", !!customElements.get("ha-entity-picker"));
+
+    if (customElements.get("ha-entity-picker")) {
+      this._entityPickerAvailable = true;
       return;
     }
-    // Creating an entities card triggers HA to load ha-entity-picker
-    await helpers.createCardElement({ type: "entities", entities: [] });
+
+    // Wait up to 3 seconds for the element to appear
+    console.log("[air-comfort-editor] waiting up to 3s for ha-entity-picker...");
+    try {
+      await Promise.race([
+        customElements.whenDefined("ha-entity-picker"),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000))
+      ]);
+      console.log("[air-comfort-editor] ha-entity-picker became available!");
+      this._entityPickerAvailable = true;
+    } catch {
+      console.warn("[air-comfort-editor] ha-entity-picker NOT available after 3s, using text input fallback");
+      this._entityPickerAvailable = false;
+    }
+  }
+
+  private _renderEntityField(field: "temperature_entity" | "humidity_entity", label: string, deviceClass: string) {
+    if (!this.config) {
+      return nothing;
+    }
+
+    if (this._entityPickerAvailable) {
+      return html`
+        <ha-entity-picker
+          .hass=${this.hass}
+          .value=${this.config[field]}
+          .label=${label}
+          .includeDomains=${["sensor"]}
+          .includeDeviceClasses=${[deviceClass]}
+          .required=${true}
+          @value-changed=${this._entityChanged(field)}
+          allow-custom-entity
+        ></ha-entity-picker>
+      `;
+    }
+
+    return html`
+      <div class="option">
+        <label for=${field}>${label}</label>
+        <input
+          id=${field}
+          type="text"
+          .value=${this.config[field] || ""}
+          placeholder="sensor.example"
+          @input=${this._valueChanged}
+        />
+      </div>
+    `;
   }
 
   protected render() {
@@ -51,27 +121,8 @@ export class AirComfortCardEditor extends LitElement {
           />
         </div>
 
-        <ha-entity-picker
-          .hass=${this.hass}
-          .value=${config.temperature_entity}
-          .label=${"Temperature Entity"}
-          .includeDomains=${["sensor"]}
-          .includeDeviceClasses=${["temperature"]}
-          .required=${true}
-          @value-changed=${this._entityChanged("temperature_entity")}
-          allow-custom-entity
-        ></ha-entity-picker>
-
-        <ha-entity-picker
-          .hass=${this.hass}
-          .value=${config.humidity_entity}
-          .label=${"Humidity Entity"}
-          .includeDomains=${["sensor"]}
-          .includeDeviceClasses=${["humidity"]}
-          .required=${true}
-          @value-changed=${this._entityChanged("humidity_entity")}
-          allow-custom-entity
-        ></ha-entity-picker>
+        ${this._renderEntityField("temperature_entity", "Temperature Entity", "temperature")}
+        ${this._renderEntityField("humidity_entity", "Humidity Entity", "humidity")}
 
         <div class="checkbox-option">
           <input
