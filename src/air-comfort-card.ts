@@ -46,7 +46,13 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       co2_entity: "",
       show_temperature_graph: true,
       show_humidity_graph: true,
-      show_co2_graph: true
+      show_co2_graph: true,
+      temp_min: 20,
+      temp_max: 24,
+      humidity_min: 40,
+      humidity_max: 60,
+      co2_min: 400,
+      co2_max: 1000
     };
   }
 
@@ -65,6 +71,12 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       show_temperature_graph: true,
       show_humidity_graph: true,
       show_co2_graph: true,
+      temp_min: 20,
+      temp_max: 24,
+      humidity_min: 40,
+      humidity_max: 60,
+      co2_min: 400,
+      co2_max: 1000,
       ...config
     };
   }
@@ -435,7 +447,12 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       radialDistance,
       isInComfortZone,
       statusText
-    } = calculateComfortZone(temperature, humidity);
+    } = calculateComfortZone(temperature, humidity, {
+      tempMin: this.config.temp_min,
+      tempMax: this.config.temp_max,
+      humidityMin: this.config.humidity_min,
+      humidityMax: this.config.humidity_max
+    });
 
     // Calculate indicator position
     const innerRadius = this.dialSize * 0.2;
@@ -541,10 +558,16 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       return null;
     }
     const co2Unit = co2State.attributes.unit_of_measurement || "ppm";
+    const co2Min = this.config.co2_min ?? 400;
+    const co2Max = this.config.co2_max ?? 1000;
+    const co2Warning = co2 < co2Min || co2 > co2Max;
     return html`
       <div class="reading">
         <div class="reading-label">CO₂</div>
         <div class="reading-value">
+          ${co2Warning
+            ? html`<span class="warning-icon">⚠</span>`
+            : ""}
           ${co2.toFixed(0)}<span class="reading-unit">${co2Unit}</span>
         </div>
       </div>

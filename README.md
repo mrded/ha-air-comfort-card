@@ -78,6 +78,12 @@ name: Living Room Comfort
 show_temperature_graph: true
 show_humidity_graph: true
 show_co2_graph: true
+temp_min: 20
+temp_max: 24
+humidity_min: 40
+humidity_max: 60
+co2_min: 400
+co2_max: 1000
 ```
 
 ### Configuration Options
@@ -92,6 +98,12 @@ show_co2_graph: true
 | `show_temperature_graph` | boolean | No | `true` | Show/hide the 24-hour temperature graph |
 | `show_humidity_graph` | boolean | No | `true` | Show/hide the 24-hour humidity graph |
 | `show_co2_graph` | boolean | No | `true` | Show/hide the 24-hour CO2 graph |
+| `temp_min` | number | No | `20` | Lower bound of comfortable temperature (°C) |
+| `temp_max` | number | No | `24` | Upper bound of comfortable temperature (°C) |
+| `humidity_min` | number | No | `40` | Lower bound of comfortable humidity (%) |
+| `humidity_max` | number | No | `60` | Upper bound of comfortable humidity (%) |
+| `co2_min` | number | No | `400` | Lower bound of comfortable CO2 (ppm) |
+| `co2_max` | number | No | `1000` | Upper bound of comfortable CO2 (ppm) |
 
 ## How It Works
 

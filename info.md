@@ -45,6 +45,12 @@ name: Living Room Comfort
 show_temperature_graph: true
 show_humidity_graph: true
 show_co2_graph: true
+temp_min: 20
+temp_max: 24
+humidity_min: 40
+humidity_max: 60
+co2_min: 400
+co2_max: 1000
 ```
 
 **Note**: The card title (`name`) can now be easily edited through the visual editor in the Home Assistant UI.

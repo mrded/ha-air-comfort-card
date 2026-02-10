@@ -90,6 +90,24 @@
       width: 100%;
       accent-color: #4CAF50;
     }
+    input[type="number"] {
+      padding: 4px 8px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #333;
+      color: #fff;
+      font-size: 14px;
+    }
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .range-label {
+      min-width: 130px;
+      font-size: 14px;
+    }
     air-comfort-card {
       display: block;
       width: 100%;
@@ -150,6 +168,27 @@
           </label>
         </div>
       </div>
+      <div class="control">
+        <label>Comfort Ranges</label>
+        <div class="range-row">
+          <span class="range-label">Temperature (°C):</span>
+          <input type="number" data-setting="temp_min" value="20" step="0.5" style="width:70px">
+          <span>–</span>
+          <input type="number" data-setting="temp_max" value="24" step="0.5" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">Humidity (%):</span>
+          <input type="number" data-setting="humidity_min" value="40" step="1" style="width:70px">
+          <span>–</span>
+          <input type="number" data-setting="humidity_max" value="60" step="1" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">CO₂ (ppm):</span>
+          <input type="number" data-setting="co2_min" value="400" step="50" style="width:70px">
+          <span>–</span>
+          <input type="number" data-setting="co2_max" value="1000" step="50" style="width:70px">
+        </div>
+      </div>
     </div>
   </div>
 
@@ -196,7 +235,13 @@
     const settings = {
       show_temperature_graph: true,
       show_humidity_graph: true,
-      show_co2_graph: true
+      show_co2_graph: true,
+      temp_min: 20,
+      temp_max: 24,
+      humidity_min: 40,
+      humidity_max: 60,
+      co2_min: 400,
+      co2_max: 1000
     };
 
     function applyConfig() {
@@ -236,7 +281,7 @@
     humiditySlider.addEventListener('input', update);
     co2Slider.addEventListener('input', update);
     document
-      .querySelectorAll('input[data-setting]')
+      .querySelectorAll('input[data-setting][type="checkbox"]')
       .forEach(input => {
         input.addEventListener('change', event => {
           const target = event.currentTarget;
@@ -248,6 +293,22 @@
             return;
           }
           settings[key] = target.checked;
+          applyConfig();
+        });
+      });
+    document
+      .querySelectorAll('input[data-setting][type="number"]')
+      .forEach(input => {
+        input.addEventListener('input', event => {
+          const target = event.currentTarget;
+          if (!(target instanceof HTMLInputElement)) {
+            return;
+          }
+          const key = target.dataset.setting;
+          if (!key) {
+            return;
+          }
+          settings[key] = parseFloat(target.value);
           applyConfig();
         });
       });

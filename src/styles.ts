@@ -41,6 +41,21 @@ export const editorStyles = css`
   ha-entity-picker {
     margin-top: 8px;
   }
+
+  .range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .range-inputs input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .range-separator {
+    color: var(--secondary-text-color);
+  }
 `;
 
 export const cardStyles = css`
