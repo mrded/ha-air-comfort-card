@@ -26,11 +26,13 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
   @state() private dialSize = 280;
   @state() private temperatureHistory: ChartDataPoint[] = [];
   @state() private humidityHistory: ChartDataPoint[] = [];
+  @state() private co2History: ChartDataPoint[] = [];
   @state() private historyExpanded = false;
 
   private resizeObserver?: ResizeObserver;
   private temperatureChart?: Chart;
   private humidityChart?: Chart;
+  private co2Chart?: Chart;
   private historyFetchInterval?: number;
   private lastHistoryFetch = 0;
 
@@ -41,8 +43,10 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       type: "custom:air-comfort-card",
       temperature_entity: "sensor.temperature",
       humidity_entity: "sensor.humidity",
+      co2_entity: "",
       show_temperature_graph: true,
-      show_humidity_graph: true
+      show_humidity_graph: true,
+      show_co2_graph: true
     };
   }
 
@@ -60,6 +64,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     this.config = {
       show_temperature_graph: true,
       show_humidity_graph: true,
+      show_co2_graph: true,
       ...config
     };
   }
@@ -102,6 +107,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     const chartDataChanged =
       changedProperties.has("temperatureHistory") ||
       changedProperties.has("humidityHistory") ||
+      changedProperties.has("co2History") ||
       changedProperties.has("config");
 
     if (changedProperties.has("historyExpanded")) {
@@ -120,6 +126,8 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     this.temperatureChart = undefined;
     this.humidityChart?.destroy();
     this.humidityChart = undefined;
+    this.co2Chart?.destroy();
+    this.co2Chart = undefined;
   }
 
   private async fetchHistory(): Promise<void> {
@@ -138,9 +146,14 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     const startTime = new Date(endTime.getTime() - 24 * 60 * 60 * 1000);
 
     try {
+      const entityIds = [this.config.temperature_entity, this.config.humidity_entity];
+      if (this.config.co2_entity) {
+        entityIds.push(this.config.co2_entity);
+      }
+
       const history = await this.hass.callApi<HistoryState[][]>(
         "GET",
-        `history/period/${startTime.toISOString()}?filter_entity_id=${this.config.temperature_entity},${this.config.humidity_entity}&end_time=${endTime.toISOString()}&minimal_response&no_attributes`
+        `history/period/${startTime.toISOString()}?filter_entity_id=${entityIds.join(",")}&end_time=${endTime.toISOString()}&minimal_response&no_attributes`
       );
 
       if (!history || history.length === 0) {
@@ -163,6 +176,8 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
           this.temperatureHistory = points;
         } else if (firstRecord.entity_id === this.config.humidity_entity) {
           this.humidityHistory = points;
+        } else if (firstRecord.entity_id === this.config.co2_entity) {
+          this.co2History = points;
         }
       }
     } catch (e) {
@@ -279,6 +294,9 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     const humidityCanvas = this.shadowRoot?.getElementById(
       "humidity-chart"
     ) as HTMLCanvasElement | null;
+    const co2Canvas = this.shadowRoot?.getElementById(
+      "co2-chart"
+    ) as HTMLCanvasElement | null;
 
     if (!tempCanvas && this.temperatureChart) {
       this.temperatureChart.destroy();
@@ -288,8 +306,12 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       this.humidityChart.destroy();
       this.humidityChart = undefined;
     }
+    if (!co2Canvas && this.co2Chart) {
+      this.co2Chart.destroy();
+      this.co2Chart = undefined;
+    }
 
-    if (!tempCanvas && !humidityCanvas) {
+    if (!tempCanvas && !humidityCanvas && !co2Canvas) {
       return;
     }
 
@@ -297,8 +319,12 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     const humidityState = this.hass?.states[
       this.config?.humidity_entity || ""
     ];
+    const co2State = this.config?.co2_entity
+      ? this.hass?.states[this.config.co2_entity]
+      : undefined;
     const tempUnit = tempState?.attributes.unit_of_measurement || "°C";
     const humidityUnit = humidityState?.attributes.unit_of_measurement || "%";
+    const co2Unit = co2State?.attributes.unit_of_measurement || "ppm";
 
     // Update or create temperature chart
     if (tempCanvas && this.temperatureHistory.length > 0) {
@@ -329,6 +355,22 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         this.humidityChart.update("none");
       } else {
         this.humidityChart = new Chart(humidityCanvas, humidityConfig);
+      }
+    }
+
+    // Update or create CO2 chart
+    if (co2Canvas && this.co2History.length > 0) {
+      const co2Config = this.getChartConfig(
+        this.co2History,
+        "CO₂",
+        "#a9e34b",
+        co2Unit
+      );
+      if (this.co2Chart) {
+        this.co2Chart.data = co2Config.data;
+        this.co2Chart.update("none");
+      } else {
+        this.co2Chart = new Chart(co2Canvas, co2Config);
       }
     }
   }
@@ -467,6 +509,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
               >
             </div>
           </div>
+          ${this.renderCo2Reading()}
         </div>
 
     ${this.renderCharts()}
@@ -485,13 +528,37 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     }
   }
 
+  private renderCo2Reading() {
+    if (!this.config?.co2_entity || !this.hass) {
+      return null;
+    }
+    const co2State = this.hass.states[this.config.co2_entity];
+    if (!co2State) {
+      return null;
+    }
+    const co2 = parseFloat(co2State.state);
+    if (isNaN(co2)) {
+      return null;
+    }
+    const co2Unit = co2State.attributes.unit_of_measurement || "ppm";
+    return html`
+      <div class="reading">
+        <div class="reading-label">CO₂</div>
+        <div class="reading-value">
+          ${co2.toFixed(0)}<span class="reading-unit">${co2Unit}</span>
+        </div>
+      </div>
+    `;
+  }
+
   private renderCharts() {
     if (!this.config) {
       return null;
     }
     const showTemperatureGraph = this.config.show_temperature_graph !== false;
     const showHumidityGraph = this.config.show_humidity_graph !== false;
-    if (!showTemperatureGraph && !showHumidityGraph) {
+    const showCo2Graph = this.config.show_co2_graph !== false && !!this.config.co2_entity;
+    if (!showTemperatureGraph && !showHumidityGraph && !showCo2Graph) {
       return null;
     }
     return html`
@@ -543,6 +610,16 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
                         <div class="chart-label">Humidity (24h)</div>
                         <div class="chart-canvas-container">
                           <canvas id="humidity-chart"></canvas>
+                        </div>
+                      </div>
+                    `
+                  : ""}
+                ${showCo2Graph
+                  ? html`
+                      <div class="chart-wrapper">
+                        <div class="chart-label">CO₂ (24h)</div>
+                        <div class="chart-canvas-container">
+                          <canvas id="co2-chart"></canvas>
                         </div>
                       </div>
                     `
