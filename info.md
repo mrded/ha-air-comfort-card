@@ -41,9 +41,6 @@ type: custom:air-comfort-card
 temperature_entity: sensor.living_room_temperature
 humidity_entity: sensor.living_room_humidity
 name: Living Room Comfort
-show_temperature: true
-show_humidity: true
-show_comfort_level: true
 show_temperature_graph: true
 show_humidity_graph: true
 ```

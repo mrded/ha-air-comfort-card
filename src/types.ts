@@ -3,9 +3,6 @@ export interface CardConfig {
   temperature_entity: string;
   humidity_entity: string;
   name?: string;
-  show_temperature?: boolean;
-  show_humidity?: boolean;
-  show_comfort_level?: boolean;
   show_temperature_graph?: boolean;
   show_humidity_graph?: boolean;
 }
