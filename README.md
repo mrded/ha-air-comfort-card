@@ -73,9 +73,11 @@ humidity_entity: sensor.living_room_humidity
 type: custom:air-comfort-card
 temperature_entity: sensor.living_room_temperature
 humidity_entity: sensor.living_room_humidity
+co2_entity: sensor.living_room_co2
 name: Living Room Comfort
 show_temperature_graph: true
 show_humidity_graph: true
+show_co2_graph: true
 ```
 
 ### Configuration Options
@@ -85,9 +87,11 @@ show_humidity_graph: true
 | `type` | string | **Yes** | - | Must be `custom:air-comfort-card` |
 | `temperature_entity` | string | **Yes** | - | Entity ID of your temperature sensor |
 | `humidity_entity` | string | **Yes** | - | Entity ID of your humidity sensor |
+| `co2_entity` | string | No | - | Entity ID of your CO2 sensor |
 | `name` | string | No | `Air Comfort` | Custom title for the card (editable via visual editor) |
 | `show_temperature_graph` | boolean | No | `true` | Show/hide the 24-hour temperature graph |
 | `show_humidity_graph` | boolean | No | `true` | Show/hide the 24-hour humidity graph |
+| `show_co2_graph` | boolean | No | `true` | Show/hide the 24-hour CO2 graph |
 
 ## How It Works
 

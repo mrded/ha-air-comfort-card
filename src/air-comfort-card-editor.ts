@@ -3,9 +3,9 @@ import { customElement, property, state } from "lit/decorators.js";
 import { CardConfig, HomeAssistant } from "./types";
 import { editorStyles } from "./styles";
 
-type EntityField = "temperature_entity" | "humidity_entity";
+type EntityField = "temperature_entity" | "humidity_entity" | "co2_entity";
 
-const ENTITY_FIELDS = new Set<string>(["temperature_entity", "humidity_entity"]);
+const ENTITY_FIELDS = new Set<string>(["temperature_entity", "humidity_entity", "co2_entity"]);
 
 // Home Assistant lazy-loads ha-entity-picker — it is NOT registered when the
 // editor first renders. We force-load it by creating a temporary "entities"
@@ -73,8 +73,10 @@ export class AirComfortCardEditor extends LitElement {
         ${this._renderTextField("name", "Card Title", "Air Comfort")}
         ${this._renderEntityField("temperature_entity", "Temperature Entity", "temperature")}
         ${this._renderEntityField("humidity_entity", "Humidity Entity", "humidity")}
+        ${this._renderEntityField("co2_entity", "CO₂ Entity", "carbon_dioxide", false)}
         ${this._renderCheckbox("show_temperature_graph", "Show Temperature Graph")}
         ${this._renderCheckbox("show_humidity_graph", "Show Humidity Graph")}
+        ${this._renderCheckbox("show_co2_graph", "Show CO₂ Graph")}
       </div>
     `;
   }
@@ -94,7 +96,7 @@ export class AirComfortCardEditor extends LitElement {
     `;
   }
 
-  private _renderEntityField(field: EntityField, label: string, deviceClass: string) {
+  private _renderEntityField(field: EntityField, label: string, deviceClass: string, required = true) {
     if (!this.config) {
       return nothing;
     }
@@ -103,11 +105,11 @@ export class AirComfortCardEditor extends LitElement {
       return html`
         <ha-entity-picker
           .hass=${this.hass}
-          .value=${this.config[field]}
+          .value=${this.config[field] || ""}
           .label=${label}
           .includeDomains=${["sensor"]}
           .includeDeviceClasses=${[deviceClass]}
-          .required=${true}
+          .required=${required}
           @value-changed=${this._entityChanged(field)}
           allow-custom-entity
         ></ha-entity-picker>

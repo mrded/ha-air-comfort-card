@@ -40,9 +40,11 @@ humidity_entity: sensor.living_room_humidity
 type: custom:air-comfort-card
 temperature_entity: sensor.living_room_temperature
 humidity_entity: sensor.living_room_humidity
+co2_entity: sensor.living_room_co2
 name: Living Room Comfort
 show_temperature_graph: true
 show_humidity_graph: true
+show_co2_graph: true
 ```
 
 **Note**: The card title (`name`) can now be easily edited through the visual editor in the Home Assistant UI.
