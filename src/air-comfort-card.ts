@@ -1,18 +1,27 @@
 import { LitElement, html, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import {
+import type {
   Chart,
   ChartConfiguration,
-  registerables,
   ScatterDataPoint
 } from "chart.js";
-import "chartjs-adapter-date-fns";
 import { CardConfig, HomeAssistant, HistoryState, LovelaceCard } from "./types";
 import { cardStyles } from "./styles";
 import { calculateComfortZone } from "./comfort-zone";
 import "./air-comfort-card-editor";
 
-Chart.register(...registerables);
+// Lazy-load Chart.js so the custom element registers immediately
+// without waiting for the heavy charting library to parse.
+let _Chart: typeof Chart | undefined;
+async function ensureChartLoaded(): Promise<typeof Chart> {
+  if (!_Chart) {
+    const mod = await import("chart.js");
+    await import("chartjs-adapter-date-fns");
+    mod.Chart.register(...mod.registerables);
+    _Chart = mod.Chart;
+  }
+  return _Chart;
+}
 
 interface ChartDataPoint {
   time: Date;
@@ -337,7 +346,12 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     };
   }
 
-  private updateCharts(): void {
+  private async updateCharts(): Promise<void> {
+    const ChartCtor = await ensureChartLoaded();
+
+    // Re-check state after async load (DOM may have changed)
+    if (!this.historyExpanded) return;
+
     const tempCanvas = this.shadowRoot?.getElementById(
       "temp-chart"
     ) as HTMLCanvasElement | null;
@@ -390,7 +404,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         this.temperatureChart.data = tempConfig.data;
         this.temperatureChart.update("none");
       } else {
-        this.temperatureChart = new Chart(tempCanvas, tempConfig);
+        this.temperatureChart = new ChartCtor(tempCanvas, tempConfig);
       }
     }
 
@@ -408,7 +422,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         this.humidityChart.data = humidityConfig.data;
         this.humidityChart.update("none");
       } else {
-        this.humidityChart = new Chart(humidityCanvas, humidityConfig);
+        this.humidityChart = new ChartCtor(humidityCanvas, humidityConfig);
       }
     }
 
@@ -426,7 +440,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         this.co2Chart.data = co2Config.data;
         this.co2Chart.update("none");
       } else {
-        this.co2Chart = new Chart(co2Canvas, co2Config);
+        this.co2Chart = new ChartCtor(co2Canvas, co2Config);
       }
     }
   }

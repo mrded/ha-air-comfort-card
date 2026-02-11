@@ -1,5 +1,6 @@
 {
   "name": "Air Comfort Card",
   "filename": "air-comfort-card.js",
+  "zip_release": true,
   "homeassistant": "2021.4.0"
 }

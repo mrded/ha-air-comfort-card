@@ -5,9 +5,11 @@ import terser from '@rollup/plugin-terser';
 export default {
   input: 'src/air-comfort-card.ts',
   output: {
-    file: 'dist/air-comfort-card.js',
+    dir: 'dist',
     format: 'es',
-    sourcemap: true
+    sourcemap: true,
+    entryFileNames: 'air-comfort-card.js',
+    chunkFileNames: '[name]-[hash].js'
   },
   plugins: [
     resolve(),
