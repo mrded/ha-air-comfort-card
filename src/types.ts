@@ -11,8 +11,9 @@ export interface CardConfig {
   temp_max?: number;
   humidity_min?: number;
   humidity_max?: number;
-  co2_min?: number;
-  co2_max?: number;
+  co2_good?: number;
+  co2_warning?: number;
+  co2_poor?: number;
 }
 
 export interface EntityState {

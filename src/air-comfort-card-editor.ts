@@ -76,7 +76,9 @@ export class AirComfortCardEditor extends LitElement {
         ${this._renderEntityField("co2_entity", "CO₂ Entity", "carbon_dioxide", false)}
         ${this._renderRangeField("temp_min", "temp_max", "Temperature Range (°C)", 20, 24)}
         ${this._renderRangeField("humidity_min", "humidity_max", "Humidity Range (%)", 40, 60)}
-        ${this._renderRangeField("co2_min", "co2_max", "CO₂ Range (ppm)", 400, 1000)}
+        ${this._renderThresholdField("co2_good", "CO₂ Good (ppm)", 800)}
+        ${this._renderThresholdField("co2_warning", "CO₂ Stuffy (ppm)", 1200)}
+        ${this._renderThresholdField("co2_poor", "CO₂ Poor (ppm)", 1500)}
         ${this._renderCheckbox("show_temperature_graph", "Show Temperature Graph")}
         ${this._renderCheckbox("show_humidity_graph", "Show Humidity Graph")}
         ${this._renderCheckbox("show_co2_graph", "Show CO₂ Graph")}
@@ -157,6 +159,21 @@ export class AirComfortCardEditor extends LitElement {
             @input=${this._valueChanged}
           />
         </div>
+      </div>
+    `;
+  }
+
+  private _renderThresholdField(id: string, label: string, defaultValue: number) {
+    return html`
+      <div class="option">
+        <label for=${id}>${label}</label>
+        <input
+          id=${id}
+          type="number"
+          .value=${String((this.config as any)?.[id] ?? defaultValue)}
+          placeholder=${String(defaultValue)}
+          @input=${this._valueChanged}
+        />
       </div>
     `;
   }

@@ -82,8 +82,9 @@ temp_min: 20
 temp_max: 24
 humidity_min: 40
 humidity_max: 60
-co2_min: 400
-co2_max: 1000
+co2_good: 800
+co2_warning: 1200
+co2_poor: 1500
 ```
 
 ### Configuration Options
@@ -102,8 +103,9 @@ co2_max: 1000
 | `temp_max` | number | No | `24` | Upper bound of comfortable temperature (°C) |
 | `humidity_min` | number | No | `40` | Lower bound of comfortable humidity (%) |
 | `humidity_max` | number | No | `60` | Upper bound of comfortable humidity (%) |
-| `co2_min` | number | No | `400` | Lower bound of comfortable CO2 (ppm) |
-| `co2_max` | number | No | `1000` | Upper bound of comfortable CO2 (ppm) |
+| `co2_good` | number | No | `800` | CO2 threshold for good indoor air (ppm) |
+| `co2_warning` | number | No | `1200` | CO2 threshold for stuffy air, ventilation needed (ppm) |
+| `co2_poor` | number | No | `1500` | CO2 threshold for poor air quality (ppm) |
 
 ## How It Works
 
