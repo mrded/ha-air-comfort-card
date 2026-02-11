@@ -709,7 +709,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 console.log("[air-comfort-card] class defined, customElements.get:", customElements.get("air-comfort-card"));
 (window as any).customCards = (window as any).customCards || [];
 (window as any).customCards.push({
-  type: "custom:air-comfort-card",
+  type: "air-comfort-card",
   name: "Air Comfort Card",
   description:
     "A card that visualizes indoor air comfort using temperature and humidity",
