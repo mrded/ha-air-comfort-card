@@ -393,12 +393,12 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     if (tempCanvas && this.temperatureHistory.length > 0) {
       const tempThresholds = [
         this.config?.temp_min != null
-          ? { value: this.config.temp_min, color: "rgba(255,255,255,0.3)" }
+          ? { value: this.config.temp_min, color: "rgba(100,150,255,0.5)", label: "Cold" }
           : null,
         this.config?.temp_max != null
-          ? { value: this.config.temp_max, color: "rgba(255,255,255,0.3)" }
+          ? { value: this.config.temp_max, color: "rgba(255,100,80,0.5)", label: "Hot" }
           : null
-      ].filter((t): t is { value: number; color: string } => t != null);
+      ].filter((t): t is { value: number; color: string; label: string } => t != null);
       const tempConfig = this.getChartConfig(
         this.temperatureHistory,
         "Temperature",
@@ -418,12 +418,12 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     if (humidityCanvas && this.humidityHistory.length > 0) {
       const humidityThresholds = [
         this.config?.humidity_min != null
-          ? { value: this.config.humidity_min, color: "rgba(255,255,255,0.3)" }
+          ? { value: this.config.humidity_min, color: "rgba(255,180,50,0.5)", label: "Dry" }
           : null,
         this.config?.humidity_max != null
-          ? { value: this.config.humidity_max, color: "rgba(255,255,255,0.3)" }
+          ? { value: this.config.humidity_max, color: "rgba(80,160,255,0.5)", label: "Wet" }
           : null
-      ].filter((t): t is { value: number; color: string } => t != null);
+      ].filter((t): t is { value: number; color: string; label: string } => t != null);
       const humidityConfig = this.getChartConfig(
         this.humidityHistory,
         "Humidity",
