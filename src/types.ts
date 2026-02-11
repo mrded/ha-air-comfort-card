@@ -7,6 +7,12 @@ export interface CardConfig {
   show_temperature_graph?: boolean;
   show_humidity_graph?: boolean;
   show_co2_graph?: boolean;
+  temp_min?: number;
+  temp_max?: number;
+  humidity_min?: number;
+  humidity_max?: number;
+  co2_min?: number;
+  co2_max?: number;
 }
 
 export interface EntityState {

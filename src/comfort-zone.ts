@@ -7,16 +7,23 @@ export interface ComfortZoneResult {
   humidityDeviation: number;
 }
 
+export interface ComfortZoneOptions {
+  tempMin?: number;
+  tempMax?: number;
+  humidityMin?: number;
+  humidityMax?: number;
+}
+
 // Comfort zone calculation based on temperature and humidity
 export function calculateComfortZone(
   temp: number,
-  humidity: number
+  humidity: number,
+  options?: ComfortZoneOptions
 ): ComfortZoneResult {
-  // Comfort zone: 20-24°C and 40-60% humidity
-  const tempMin = 20;
-  const tempMax = 24;
-  const humidityMin = 40;
-  const humidityMax = 60;
+  const tempMin = options?.tempMin ?? 20;
+  const tempMax = options?.tempMax ?? 24;
+  const humidityMin = options?.humidityMin ?? 40;
+  const humidityMax = options?.humidityMax ?? 60;
 
   // Normalization factors for radial distance calculation
   const TEMP_NORMALIZATION_FACTOR = 10; // 10°C deviation = 1.0 normalized

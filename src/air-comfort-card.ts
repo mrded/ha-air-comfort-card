@@ -46,7 +46,13 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       co2_entity: "",
       show_temperature_graph: true,
       show_humidity_graph: true,
-      show_co2_graph: true
+      show_co2_graph: true,
+      temp_min: 20,
+      temp_max: 24,
+      humidity_min: 40,
+      humidity_max: 60,
+      co2_min: 400,
+      co2_max: 1000
     };
   }
 
@@ -65,6 +71,12 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       show_temperature_graph: true,
       show_humidity_graph: true,
       show_co2_graph: true,
+      temp_min: 20,
+      temp_max: 24,
+      humidity_min: 40,
+      humidity_max: 60,
+      co2_min: 400,
+      co2_max: 1000,
       ...config
     };
   }
@@ -117,6 +129,10 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         this.destroyCharts();
       }
     } else if (this.historyExpanded && chartDataChanged) {
+      // Recreate charts when config changes so threshold lines update
+      if (changedProperties.has("config")) {
+        this.destroyCharts();
+      }
       this.updateCharts();
     }
   }
@@ -189,12 +205,45 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     data: ChartDataPoint[],
     label: string,
     color: string,
-    unit: string
+    unit: string,
+    thresholdMin?: number,
+    thresholdMax?: number
   ): ChartConfiguration {
     const datasetPoints: ScatterDataPoint[] = data.map(point => ({
       x: point.time.getTime(),
       y: point.value
     }));
+
+    const plugins: ChartConfiguration["plugins"] = [];
+    if (thresholdMin != null || thresholdMax != null) {
+      plugins.push({
+        id: "thresholdLines",
+        afterDatasetsDraw(chart: Chart) {
+          const { ctx, chartArea, scales } = chart;
+          const yScale = scales.y;
+          if (!yScale || !chartArea) return;
+
+          ctx.save();
+          ctx.setLineDash([6, 4]);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = "rgba(255,255,255,0.3)";
+
+          for (const val of [thresholdMin, thresholdMax]) {
+            if (val == null) continue;
+            const yMin = yScale.min as number;
+            const yMax = yScale.max as number;
+            if (val < yMin || val > yMax) continue;
+            const y = yScale.getPixelForValue(val);
+            ctx.beginPath();
+            ctx.moveTo(chartArea.left, y);
+            ctx.lineTo(chartArea.right, y);
+            ctx.stroke();
+          }
+
+          ctx.restore();
+        }
+      });
+    }
 
     return {
       type: "line",
@@ -212,6 +261,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
           }
         ]
       },
+      plugins,
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -332,7 +382,9 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         this.temperatureHistory,
         "Temperature",
         "#ff6b6b",
-        tempUnit
+        tempUnit,
+        this.config?.temp_min,
+        this.config?.temp_max
       );
       if (this.temperatureChart) {
         this.temperatureChart.data = tempConfig.data;
@@ -348,7 +400,9 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         this.humidityHistory,
         "Humidity",
         "#4dabf7",
-        humidityUnit
+        humidityUnit,
+        this.config?.humidity_min,
+        this.config?.humidity_max
       );
       if (this.humidityChart) {
         this.humidityChart.data = humidityConfig.data;
@@ -364,7 +418,9 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         this.co2History,
         "CO₂",
         "#a9e34b",
-        co2Unit
+        co2Unit,
+        this.config?.co2_min,
+        this.config?.co2_max
       );
       if (this.co2Chart) {
         this.co2Chart.data = co2Config.data;
@@ -435,7 +491,12 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       radialDistance,
       isInComfortZone,
       statusText
-    } = calculateComfortZone(temperature, humidity);
+    } = calculateComfortZone(temperature, humidity, {
+      tempMin: this.config.temp_min,
+      tempMax: this.config.temp_max,
+      humidityMin: this.config.humidity_min,
+      humidityMax: this.config.humidity_max
+    });
 
     // Calculate indicator position
     const innerRadius = this.dialSize * 0.2;
@@ -541,10 +602,16 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       return null;
     }
     const co2Unit = co2State.attributes.unit_of_measurement || "ppm";
+    const co2Min = this.config.co2_min ?? 400;
+    const co2Max = this.config.co2_max ?? 1000;
+    const co2Warning = co2 < co2Min || co2 > co2Max;
     return html`
       <div class="reading">
         <div class="reading-label">CO₂</div>
         <div class="reading-value">
+          ${co2Warning
+            ? html`<span class="warning-icon">⚠</span>`
+            : ""}
           ${co2.toFixed(0)}<span class="reading-unit">${co2Unit}</span>
         </div>
       </div>

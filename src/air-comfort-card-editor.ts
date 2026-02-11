@@ -74,6 +74,9 @@ export class AirComfortCardEditor extends LitElement {
         ${this._renderEntityField("temperature_entity", "Temperature Entity", "temperature")}
         ${this._renderEntityField("humidity_entity", "Humidity Entity", "humidity")}
         ${this._renderEntityField("co2_entity", "CO₂ Entity", "carbon_dioxide", false)}
+        ${this._renderRangeField("temp_min", "temp_max", "Temperature Range (°C)", 20, 24)}
+        ${this._renderRangeField("humidity_min", "humidity_max", "Humidity Range (%)", 40, 60)}
+        ${this._renderRangeField("co2_min", "co2_max", "CO₂ Range (ppm)", 400, 1000)}
         ${this._renderCheckbox("show_temperature_graph", "Show Temperature Graph")}
         ${this._renderCheckbox("show_humidity_graph", "Show Humidity Graph")}
         ${this._renderCheckbox("show_co2_graph", "Show CO₂ Graph")}
@@ -133,6 +136,31 @@ export class AirComfortCardEditor extends LitElement {
     `;
   }
 
+  private _renderRangeField(minId: string, maxId: string, label: string, defaultMin: number, defaultMax: number) {
+    return html`
+      <div class="option">
+        <label>${label}</label>
+        <div class="range-inputs">
+          <input
+            id=${minId}
+            type="number"
+            .value=${String((this.config as any)?.[minId] ?? defaultMin)}
+            placeholder=${String(defaultMin)}
+            @input=${this._valueChanged}
+          />
+          <span class="range-separator">–</span>
+          <input
+            id=${maxId}
+            type="number"
+            .value=${String((this.config as any)?.[maxId] ?? defaultMax)}
+            placeholder=${String(defaultMax)}
+            @input=${this._valueChanged}
+          />
+        </div>
+      </div>
+    `;
+  }
+
   // --- Event handlers ---
 
   private _entityChanged(field: EntityField) {
@@ -145,9 +173,11 @@ export class AirComfortCardEditor extends LitElement {
     const target = ev.target as HTMLInputElement;
     const id = target.id;
 
-    let value: string | boolean | undefined;
+    let value: string | boolean | number | undefined;
     if (target.type === "checkbox") {
       value = target.checked;
+    } else if (target.type === "number") {
+      value = target.value === "" ? undefined : parseFloat(target.value);
     } else {
       value = target.value;
       if (value === "" && ENTITY_FIELDS.has(id)) {
@@ -158,7 +188,7 @@ export class AirComfortCardEditor extends LitElement {
     this._updateConfig(id, value);
   }
 
-  private _updateConfig(key: string, value: string | boolean | undefined): void {
+  private _updateConfig(key: string, value: string | boolean | number | undefined): void {
     if (!this.config) {
       return;
     }
