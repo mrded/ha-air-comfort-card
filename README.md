@@ -5,7 +5,7 @@
 
 A custom Home Assistant card that visualizes indoor air comfort using temperature and humidity sensors. The card combines both values into a single circular "comfort dial" with a moving dot indicator, showing whether a room feels cold, warm, dry, humid, or comfortable.
 
-<img src="screenshot.png" alt="Air Comfort Card Screenshot" width="400">
+<img src="https://raw.githubusercontent.com/mrded/ha-air-comfort-card/main/screenshot.png" alt="Air Comfort Card Screenshot" width="400">
 
 ## Features
 
