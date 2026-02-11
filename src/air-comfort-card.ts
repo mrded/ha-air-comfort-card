@@ -12,7 +12,13 @@ import { cardStyles } from "./styles";
 import { calculateComfortZone } from "./comfort-zone";
 import "./air-comfort-card-editor";
 
-Chart.register(...registerables);
+console.log("[air-comfort-card] module executing, registering Chart.js...");
+try {
+  Chart.register(...registerables);
+  console.log("[air-comfort-card] Chart.js registered OK");
+} catch (e) {
+  console.error("[air-comfort-card] Chart.register FAILED:", e);
+}
 
 interface ChartDataPoint {
   time: Date;
@@ -700,6 +706,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 }
 
 // Register the card with Home Assistant
+console.log("[air-comfort-card] class defined, customElements.get:", customElements.get("air-comfort-card"));
 (window as any).customCards = (window as any).customCards || [];
 (window as any).customCards.push({
   type: "custom:air-comfort-card",
@@ -709,6 +716,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
   preview: false,
   documentationURL: "https://github.com/mrded/ha-air-comfort-card"
 });
+console.log("[air-comfort-card] registration complete");
 
 declare global {
   interface HTMLElementTagNameMap {
