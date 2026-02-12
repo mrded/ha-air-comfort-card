@@ -42,6 +42,24 @@ export const editorStyles = css`
     margin-top: 8px;
   }
 
+  .section {
+    border: 1px solid var(--divider-color);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .section-title {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--secondary-text-color);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+  }
+
   .range-inputs {
     display: flex;
     align-items: center;

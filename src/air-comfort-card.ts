@@ -27,12 +27,20 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
   @state() private temperatureHistory: ChartDataPoint[] = [];
   @state() private humidityHistory: ChartDataPoint[] = [];
   @state() private co2History: ChartDataPoint[] = [];
+  @state() private no2History: ChartDataPoint[] = [];
+  @state() private pm25History: ChartDataPoint[] = [];
+  @state() private pm10History: ChartDataPoint[] = [];
+  @state() private vocHistory: ChartDataPoint[] = [];
   @state() private historyExpanded = false;
 
   private resizeObserver?: ResizeObserver;
   private temperatureChart?: Chart;
   private humidityChart?: Chart;
   private co2Chart?: Chart;
+  private no2Chart?: Chart;
+  private pm25Chart?: Chart;
+  private pm10Chart?: Chart;
+  private vocChart?: Chart;
   private historyFetchInterval?: number;
   private lastHistoryFetch = 0;
 
@@ -44,16 +52,36 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       temperature_entity: "sensor.temperature",
       humidity_entity: "sensor.humidity",
       co2_entity: "",
+      no2_entity: "",
+      pm25_entity: "",
+      pm10_entity: "",
+      voc_entity: "",
       show_temperature_graph: true,
       show_humidity_graph: true,
       show_co2_graph: true,
+      show_no2_graph: true,
+      show_pm25_graph: true,
+      show_pm10_graph: true,
+      show_voc_graph: true,
       temp_min: 20,
       temp_max: 24,
       humidity_min: 40,
       humidity_max: 60,
       co2_good: 800,
       co2_warning: 1200,
-      co2_poor: 1500
+      co2_poor: 1500,
+      no2_good: 50,
+      no2_warning: 150,
+      no2_poor: 250,
+      pm25_good: 15,
+      pm25_warning: 35,
+      pm25_poor: 75,
+      pm10_good: 45,
+      pm10_warning: 100,
+      pm10_poor: 150,
+      voc_good: 150,
+      voc_warning: 250,
+      voc_poor: 400
     };
   }
 
@@ -72,6 +100,10 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       show_temperature_graph: true,
       show_humidity_graph: true,
       show_co2_graph: true,
+      show_no2_graph: true,
+      show_pm25_graph: true,
+      show_pm10_graph: true,
+      show_voc_graph: true,
       temp_min: 20,
       temp_max: 24,
       humidity_min: 40,
@@ -79,6 +111,18 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       co2_good: 800,
       co2_warning: 1200,
       co2_poor: 1500,
+      no2_good: 50,
+      no2_warning: 150,
+      no2_poor: 250,
+      pm25_good: 15,
+      pm25_warning: 35,
+      pm25_poor: 75,
+      pm10_good: 45,
+      pm10_warning: 100,
+      pm10_poor: 150,
+      voc_good: 150,
+      voc_warning: 250,
+      voc_poor: 400,
       ...config
     };
   }
@@ -122,6 +166,10 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       changedProperties.has("temperatureHistory") ||
       changedProperties.has("humidityHistory") ||
       changedProperties.has("co2History") ||
+      changedProperties.has("no2History") ||
+      changedProperties.has("pm25History") ||
+      changedProperties.has("pm10History") ||
+      changedProperties.has("vocHistory") ||
       changedProperties.has("config");
 
     if (changedProperties.has("historyExpanded")) {
@@ -146,6 +194,14 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     this.humidityChart = undefined;
     this.co2Chart?.destroy();
     this.co2Chart = undefined;
+    this.no2Chart?.destroy();
+    this.no2Chart = undefined;
+    this.pm25Chart?.destroy();
+    this.pm25Chart = undefined;
+    this.pm10Chart?.destroy();
+    this.pm10Chart = undefined;
+    this.vocChart?.destroy();
+    this.vocChart = undefined;
   }
 
   private async fetchHistory(): Promise<void> {
@@ -167,6 +223,18 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       const entityIds = [this.config.temperature_entity, this.config.humidity_entity];
       if (this.config.co2_entity) {
         entityIds.push(this.config.co2_entity);
+      }
+      if (this.config.no2_entity) {
+        entityIds.push(this.config.no2_entity);
+      }
+      if (this.config.pm25_entity) {
+        entityIds.push(this.config.pm25_entity);
+      }
+      if (this.config.pm10_entity) {
+        entityIds.push(this.config.pm10_entity);
+      }
+      if (this.config.voc_entity) {
+        entityIds.push(this.config.voc_entity);
       }
 
       const history = await this.hass.callApi<HistoryState[][]>(
@@ -196,6 +264,14 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
           this.humidityHistory = points;
         } else if (firstRecord.entity_id === this.config.co2_entity) {
           this.co2History = points;
+        } else if (firstRecord.entity_id === this.config.no2_entity) {
+          this.no2History = points;
+        } else if (firstRecord.entity_id === this.config.pm25_entity) {
+          this.pm25History = points;
+        } else if (firstRecord.entity_id === this.config.pm10_entity) {
+          this.pm10History = points;
+        } else if (firstRecord.entity_id === this.config.voc_entity) {
+          this.vocHistory = points;
         }
       }
     } catch (e) {
@@ -360,6 +436,18 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     const co2Canvas = this.shadowRoot?.getElementById(
       "co2-chart"
     ) as HTMLCanvasElement | null;
+    const no2Canvas = this.shadowRoot?.getElementById(
+      "no2-chart"
+    ) as HTMLCanvasElement | null;
+    const pm25Canvas = this.shadowRoot?.getElementById(
+      "pm25-chart"
+    ) as HTMLCanvasElement | null;
+    const pm10Canvas = this.shadowRoot?.getElementById(
+      "pm10-chart"
+    ) as HTMLCanvasElement | null;
+    const vocCanvas = this.shadowRoot?.getElementById(
+      "voc-chart"
+    ) as HTMLCanvasElement | null;
 
     if (!tempCanvas && this.temperatureChart) {
       this.temperatureChart.destroy();
@@ -373,8 +461,24 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       this.co2Chart.destroy();
       this.co2Chart = undefined;
     }
+    if (!no2Canvas && this.no2Chart) {
+      this.no2Chart.destroy();
+      this.no2Chart = undefined;
+    }
+    if (!pm25Canvas && this.pm25Chart) {
+      this.pm25Chart.destroy();
+      this.pm25Chart = undefined;
+    }
+    if (!pm10Canvas && this.pm10Chart) {
+      this.pm10Chart.destroy();
+      this.pm10Chart = undefined;
+    }
+    if (!vocCanvas && this.vocChart) {
+      this.vocChart.destroy();
+      this.vocChart = undefined;
+    }
 
-    if (!tempCanvas && !humidityCanvas && !co2Canvas) {
+    if (!tempCanvas && !humidityCanvas && !co2Canvas && !no2Canvas && !pm25Canvas && !pm10Canvas && !vocCanvas) {
       return;
     }
 
@@ -385,9 +489,25 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     const co2State = this.config?.co2_entity
       ? this.hass?.states[this.config.co2_entity]
       : undefined;
+    const no2State = this.config?.no2_entity
+      ? this.hass?.states[this.config.no2_entity]
+      : undefined;
+    const pm25State = this.config?.pm25_entity
+      ? this.hass?.states[this.config.pm25_entity]
+      : undefined;
+    const pm10State = this.config?.pm10_entity
+      ? this.hass?.states[this.config.pm10_entity]
+      : undefined;
+    const vocState = this.config?.voc_entity
+      ? this.hass?.states[this.config.voc_entity]
+      : undefined;
     const tempUnit = tempState?.attributes.unit_of_measurement || "°C";
     const humidityUnit = humidityState?.attributes.unit_of_measurement || "%";
     const co2Unit = co2State?.attributes.unit_of_measurement || "ppm";
+    const no2Unit = no2State?.attributes.unit_of_measurement || "";
+    const pm25Unit = pm25State?.attributes.unit_of_measurement || "µg/m³";
+    const pm10Unit = pm10State?.attributes.unit_of_measurement || "µg/m³";
+    const vocUnit = vocState?.attributes.unit_of_measurement || "";
 
     // Update or create temperature chart
     if (tempCanvas && this.temperatureHistory.length > 0) {
@@ -464,6 +584,118 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         this.co2Chart.update("none");
       } else {
         this.co2Chart = new Chart(co2Canvas, co2Config);
+      }
+    }
+
+    // Update or create NO2 chart
+    if (no2Canvas && this.no2History.length > 0) {
+      const no2Thresholds = [
+        this.config?.no2_good != null
+          ? { value: this.config.no2_good, color: "rgba(100,220,100,0.5)", label: "Good" }
+          : null,
+        this.config?.no2_warning != null
+          ? { value: this.config.no2_warning, color: "rgba(255,180,50,0.5)", label: "Warning" }
+          : null,
+        this.config?.no2_poor != null
+          ? { value: this.config.no2_poor, color: "rgba(255,80,80,0.5)", label: "Poor" }
+          : null
+      ].filter((t): t is { value: number; color: string; label: string } => t != null);
+      const no2Config = this.getChartConfig(
+        this.no2History,
+        "NO₂",
+        "#ffa94d",
+        no2Unit,
+        no2Thresholds
+      );
+      if (this.no2Chart) {
+        this.no2Chart.data = no2Config.data;
+        this.no2Chart.update("none");
+      } else {
+        this.no2Chart = new Chart(no2Canvas, no2Config);
+      }
+    }
+
+    // Update or create PM2.5 chart
+    if (pm25Canvas && this.pm25History.length > 0) {
+      const pm25Thresholds = [
+        this.config?.pm25_good != null
+          ? { value: this.config.pm25_good, color: "rgba(100,220,100,0.5)", label: "Good" }
+          : null,
+        this.config?.pm25_warning != null
+          ? { value: this.config.pm25_warning, color: "rgba(255,180,50,0.5)", label: "Warning" }
+          : null,
+        this.config?.pm25_poor != null
+          ? { value: this.config.pm25_poor, color: "rgba(255,80,80,0.5)", label: "Poor" }
+          : null
+      ].filter((t): t is { value: number; color: string; label: string } => t != null);
+      const pm25Config = this.getChartConfig(
+        this.pm25History,
+        "PM 2.5",
+        "#da77f2",
+        pm25Unit,
+        pm25Thresholds
+      );
+      if (this.pm25Chart) {
+        this.pm25Chart.data = pm25Config.data;
+        this.pm25Chart.update("none");
+      } else {
+        this.pm25Chart = new Chart(pm25Canvas, pm25Config);
+      }
+    }
+
+    // Update or create PM10 chart
+    if (pm10Canvas && this.pm10History.length > 0) {
+      const pm10Thresholds = [
+        this.config?.pm10_good != null
+          ? { value: this.config.pm10_good, color: "rgba(100,220,100,0.5)", label: "Good" }
+          : null,
+        this.config?.pm10_warning != null
+          ? { value: this.config.pm10_warning, color: "rgba(255,180,50,0.5)", label: "Warning" }
+          : null,
+        this.config?.pm10_poor != null
+          ? { value: this.config.pm10_poor, color: "rgba(255,80,80,0.5)", label: "Poor" }
+          : null
+      ].filter((t): t is { value: number; color: string; label: string } => t != null);
+      const pm10Config = this.getChartConfig(
+        this.pm10History,
+        "PM 10",
+        "#74c0fc",
+        pm10Unit,
+        pm10Thresholds
+      );
+      if (this.pm10Chart) {
+        this.pm10Chart.data = pm10Config.data;
+        this.pm10Chart.update("none");
+      } else {
+        this.pm10Chart = new Chart(pm10Canvas, pm10Config);
+      }
+    }
+
+    // Update or create VOC chart
+    if (vocCanvas && this.vocHistory.length > 0) {
+      const vocThresholds = [
+        this.config?.voc_good != null
+          ? { value: this.config.voc_good, color: "rgba(100,220,100,0.5)", label: "Good" }
+          : null,
+        this.config?.voc_warning != null
+          ? { value: this.config.voc_warning, color: "rgba(255,180,50,0.5)", label: "Warning" }
+          : null,
+        this.config?.voc_poor != null
+          ? { value: this.config.voc_poor, color: "rgba(255,80,80,0.5)", label: "Poor" }
+          : null
+      ].filter((t): t is { value: number; color: string; label: string } => t != null);
+      const vocConfig = this.getChartConfig(
+        this.vocHistory,
+        "VOC",
+        "#20c997",
+        vocUnit,
+        vocThresholds
+      );
+      if (this.vocChart) {
+        this.vocChart.data = vocConfig.data;
+        this.vocChart.update("none");
+      } else {
+        this.vocChart = new Chart(vocCanvas, vocConfig);
       }
     }
   }
@@ -607,7 +839,6 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
               >
             </div>
           </div>
-          ${this.renderCo2Reading()}
         </div>
 
     ${this.renderCharts()}
@@ -626,34 +857,6 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     }
   }
 
-  private renderCo2Reading() {
-    if (!this.config?.co2_entity || !this.hass) {
-      return null;
-    }
-    const co2State = this.hass.states[this.config.co2_entity];
-    if (!co2State) {
-      return null;
-    }
-    const co2 = parseFloat(co2State.state);
-    if (isNaN(co2)) {
-      return null;
-    }
-    const co2Unit = co2State.attributes.unit_of_measurement || "ppm";
-    const co2Good = this.config.co2_good ?? 800;
-    const co2Warning = co2 > co2Good;
-    return html`
-      <div class="reading">
-        <div class="reading-label">CO₂</div>
-        <div class="reading-value">
-          ${co2Warning
-            ? html`<span class="warning-icon">⚠</span>`
-            : ""}
-          ${co2.toFixed(0)}<span class="reading-unit">${co2Unit}</span>
-        </div>
-      </div>
-    `;
-  }
-
   private renderCharts() {
     if (!this.config) {
       return null;
@@ -661,7 +864,11 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     const showTemperatureGraph = this.config.show_temperature_graph !== false;
     const showHumidityGraph = this.config.show_humidity_graph !== false;
     const showCo2Graph = this.config.show_co2_graph !== false && !!this.config.co2_entity;
-    if (!showTemperatureGraph && !showHumidityGraph && !showCo2Graph) {
+    const showNo2Graph = this.config.show_no2_graph !== false && !!this.config.no2_entity;
+    const showPm25Graph = this.config.show_pm25_graph !== false && !!this.config.pm25_entity;
+    const showPm10Graph = this.config.show_pm10_graph !== false && !!this.config.pm10_entity;
+    const showVocGraph = this.config.show_voc_graph !== false && !!this.config.voc_entity;
+    if (!showTemperatureGraph && !showHumidityGraph && !showCo2Graph && !showNo2Graph && !showPm25Graph && !showPm10Graph && !showVocGraph) {
       return null;
     }
     return html`
@@ -723,6 +930,46 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
                         <div class="chart-label">CO₂ (24h)</div>
                         <div class="chart-canvas-container">
                           <canvas id="co2-chart"></canvas>
+                        </div>
+                      </div>
+                    `
+                  : ""}
+                ${showNo2Graph
+                  ? html`
+                      <div class="chart-wrapper">
+                        <div class="chart-label">NO₂ (24h)</div>
+                        <div class="chart-canvas-container">
+                          <canvas id="no2-chart"></canvas>
+                        </div>
+                      </div>
+                    `
+                  : ""}
+                ${showPm25Graph
+                  ? html`
+                      <div class="chart-wrapper">
+                        <div class="chart-label">PM 2.5 (24h)</div>
+                        <div class="chart-canvas-container">
+                          <canvas id="pm25-chart"></canvas>
+                        </div>
+                      </div>
+                    `
+                  : ""}
+                ${showPm10Graph
+                  ? html`
+                      <div class="chart-wrapper">
+                        <div class="chart-label">PM 10 (24h)</div>
+                        <div class="chart-canvas-container">
+                          <canvas id="pm10-chart"></canvas>
+                        </div>
+                      </div>
+                    `
+                  : ""}
+                ${showVocGraph
+                  ? html`
+                      <div class="chart-wrapper">
+                        <div class="chart-label">VOC (24h)</div>
+                        <div class="chart-canvas-container">
+                          <canvas id="voc-chart"></canvas>
                         </div>
                       </div>
                     `

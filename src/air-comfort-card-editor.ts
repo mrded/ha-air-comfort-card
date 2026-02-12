@@ -3,9 +3,9 @@ import { customElement, property, state } from "lit/decorators.js";
 import { CardConfig, HomeAssistant } from "./types";
 import { editorStyles } from "./styles";
 
-type EntityField = "temperature_entity" | "humidity_entity" | "co2_entity";
+type EntityField = "temperature_entity" | "humidity_entity" | "co2_entity" | "no2_entity" | "pm25_entity" | "pm10_entity" | "voc_entity";
 
-const ENTITY_FIELDS = new Set<string>(["temperature_entity", "humidity_entity", "co2_entity"]);
+const ENTITY_FIELDS = new Set<string>(["temperature_entity", "humidity_entity", "co2_entity", "no2_entity", "pm25_entity", "pm10_entity", "voc_entity"]);
 
 // Home Assistant lazy-loads ha-entity-picker — it is NOT registered when the
 // editor first renders. We force-load it by creating a temporary "entities"
@@ -71,17 +71,65 @@ export class AirComfortCardEditor extends LitElement {
     return html`
       <div class="card-config">
         ${this._renderTextField("name", "Card Title", "Air Comfort")}
-        ${this._renderEntityField("temperature_entity", "Temperature Entity", "temperature")}
-        ${this._renderEntityField("humidity_entity", "Humidity Entity", "humidity")}
-        ${this._renderEntityField("co2_entity", "CO₂ Entity", "carbon_dioxide", false)}
-        ${this._renderRangeField("temp_min", "temp_max", "Temperature Range (°C)", 20, 24)}
-        ${this._renderRangeField("humidity_min", "humidity_max", "Humidity Range (%)", 40, 60)}
-        ${this._renderThresholdField("co2_good", "CO₂ Good (ppm)", 800)}
-        ${this._renderThresholdField("co2_warning", "CO₂ Stuffy (ppm)", 1200)}
-        ${this._renderThresholdField("co2_poor", "CO₂ Poor (ppm)", 1500)}
-        ${this._renderCheckbox("show_temperature_graph", "Show Temperature Graph")}
-        ${this._renderCheckbox("show_humidity_graph", "Show Humidity Graph")}
-        ${this._renderCheckbox("show_co2_graph", "Show CO₂ Graph")}
+
+        <div class="section">
+          <div class="section-title">Temperature</div>
+          ${this._renderEntityField("temperature_entity", "Temperature Entity", "temperature")}
+          ${this._renderRangeField("temp_min", "temp_max", "Comfort Range (°C)", 20, 24)}
+          ${this._renderCheckbox("show_temperature_graph", "Show Graph")}
+        </div>
+
+        <div class="section">
+          <div class="section-title">Humidity</div>
+          ${this._renderEntityField("humidity_entity", "Humidity Entity", "humidity")}
+          ${this._renderRangeField("humidity_min", "humidity_max", "Comfort Range (%)", 40, 60)}
+          ${this._renderCheckbox("show_humidity_graph", "Show Graph")}
+        </div>
+
+        <div class="section">
+          <div class="section-title">CO₂</div>
+          ${this._renderEntityField("co2_entity", "CO₂ Entity", "carbon_dioxide", false)}
+          ${this._renderThresholdField("co2_good", "Good (ppm)", 800)}
+          ${this._renderThresholdField("co2_warning", "Stuffy (ppm)", 1200)}
+          ${this._renderThresholdField("co2_poor", "Poor (ppm)", 1500)}
+          ${this._renderCheckbox("show_co2_graph", "Show Graph")}
+        </div>
+
+        <div class="section">
+          <div class="section-title">NO₂</div>
+          ${this._renderEntityField("no2_entity", "NO₂ Entity", "nitrogen_dioxide", false)}
+          ${this._renderThresholdField("no2_good", "Good", 50)}
+          ${this._renderThresholdField("no2_warning", "Warning", 150)}
+          ${this._renderThresholdField("no2_poor", "Poor", 250)}
+          ${this._renderCheckbox("show_no2_graph", "Show Graph")}
+        </div>
+
+        <div class="section">
+          <div class="section-title">PM 2.5</div>
+          ${this._renderEntityField("pm25_entity", "PM 2.5 Entity", "pm25", false)}
+          ${this._renderThresholdField("pm25_good", "Good (µg/m³)", 15)}
+          ${this._renderThresholdField("pm25_warning", "Warning (µg/m³)", 35)}
+          ${this._renderThresholdField("pm25_poor", "Poor (µg/m³)", 75)}
+          ${this._renderCheckbox("show_pm25_graph", "Show Graph")}
+        </div>
+
+        <div class="section">
+          <div class="section-title">PM 10</div>
+          ${this._renderEntityField("pm10_entity", "PM 10 Entity", "pm10", false)}
+          ${this._renderThresholdField("pm10_good", "Good (µg/m³)", 45)}
+          ${this._renderThresholdField("pm10_warning", "Warning (µg/m³)", 100)}
+          ${this._renderThresholdField("pm10_poor", "Poor (µg/m³)", 150)}
+          ${this._renderCheckbox("show_pm10_graph", "Show Graph")}
+        </div>
+
+        <div class="section">
+          <div class="section-title">VOC</div>
+          ${this._renderEntityField("voc_entity", "VOC Entity", "volatile_organic_compounds", false)}
+          ${this._renderThresholdField("voc_good", "Good", 150)}
+          ${this._renderThresholdField("voc_warning", "Warning", 250)}
+          ${this._renderThresholdField("voc_poor", "Poor", 400)}
+          ${this._renderCheckbox("show_voc_graph", "Show Graph")}
+        </div>
       </div>
     `;
   }

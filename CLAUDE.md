@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a custom Home Assistant Lovelace card that visualizes indoor air comfort using temperature and humidity sensors. It displays a circular "comfort dial" with a moving dot indicator showing whether conditions are cold, warm, dry, humid, or comfortable. The card also includes 24-hour history charts for both temperature and humidity using Chart.js.
+This is a custom Home Assistant Lovelace card that visualizes indoor air comfort using temperature and humidity sensors. It displays a circular "comfort dial" with a moving dot indicator showing whether conditions are cold, warm, dry, humid, or comfortable. The card also includes 24-hour history charts for temperature, humidity, CO2, NO2, PM 2.5, PM 10, and VOC using Chart.js.
 
 ## Commands
 
@@ -28,7 +28,7 @@ The entire card is implemented in a single file: `src/air-comfort-card.ts`
 
 ### Key Components
 
-- **`AirComfortCard`** - Main Lovelace card component (LitElement). Renders the comfort dial, indicator dot, temperature/humidity readings, and 24-hour history charts.
+- **`AirComfortCard`** - Main Lovelace card component (LitElement). Renders the comfort dial, indicator dot, temperature/humidity readings, and 24-hour history charts for temperature, humidity, and air quality sensors (CO2, NO2, PM 2.5, PM 10, VOC).
 - **`AirComfortCardEditor`** - Visual editor component for configuring the card in Home Assistant UI.
 - **`calculateComfortZone()`** - Core algorithm that computes:
   - Indicator angle (0-360°: top=warm, right=humid, bottom=cold, left=dry)
