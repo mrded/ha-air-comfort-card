@@ -51,8 +51,9 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       temp_max: 24,
       humidity_min: 40,
       humidity_max: 60,
-      co2_min: 400,
-      co2_max: 1000
+      co2_good: 800,
+      co2_warning: 1200,
+      co2_poor: 1500
     };
   }
 
@@ -75,8 +76,9 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       temp_max: 24,
       humidity_min: 40,
       humidity_max: 60,
-      co2_min: 400,
-      co2_max: 1000,
+      co2_good: 800,
+      co2_warning: 1200,
+      co2_poor: 1500,
       ...config
     };
   }
@@ -206,8 +208,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     label: string,
     color: string,
     unit: string,
-    thresholdMin?: number,
-    thresholdMax?: number
+    thresholds?: { value: number; color: string; label?: string }[]
   ): ChartConfiguration {
     const datasetPoints: ScatterDataPoint[] = data.map(point => ({
       x: point.time.getTime(),
@@ -215,7 +216,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     }));
 
     const plugins: ChartConfiguration["plugins"] = [];
-    if (thresholdMin != null || thresholdMax != null) {
+    if (thresholds && thresholds.length > 0) {
       plugins.push({
         id: "thresholdLines",
         afterDatasetsDraw(chart: Chart) {
@@ -224,20 +225,32 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
           if (!yScale || !chartArea) return;
 
           ctx.save();
-          ctx.setLineDash([6, 4]);
-          ctx.lineWidth = 1;
-          ctx.strokeStyle = "rgba(255,255,255,0.3)";
 
-          for (const val of [thresholdMin, thresholdMax]) {
-            if (val == null) continue;
+          for (const threshold of thresholds) {
             const yMin = yScale.min as number;
             const yMax = yScale.max as number;
-            if (val < yMin || val > yMax) continue;
-            const y = yScale.getPixelForValue(val);
+            if (threshold.value < yMin || threshold.value > yMax) continue;
+            const y = yScale.getPixelForValue(threshold.value);
+
+            ctx.setLineDash([6, 4]);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = threshold.color;
             ctx.beginPath();
             ctx.moveTo(chartArea.left, y);
             ctx.lineTo(chartArea.right, y);
             ctx.stroke();
+
+            if (threshold.label) {
+              ctx.setLineDash([]);
+              ctx.font = "10px sans-serif";
+              ctx.fillStyle = threshold.color;
+              ctx.textAlign = "right";
+              ctx.fillText(
+                threshold.label,
+                chartArea.right - 4,
+                y - 4
+              );
+            }
           }
 
           ctx.restore();
@@ -378,13 +391,20 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 
     // Update or create temperature chart
     if (tempCanvas && this.temperatureHistory.length > 0) {
+      const tempThresholds = [
+        this.config?.temp_min != null
+          ? { value: this.config.temp_min, color: "rgba(100,150,255,0.5)", label: "Cold" }
+          : null,
+        this.config?.temp_max != null
+          ? { value: this.config.temp_max, color: "rgba(255,100,80,0.5)", label: "Hot" }
+          : null
+      ].filter((t): t is { value: number; color: string; label: string } => t != null);
       const tempConfig = this.getChartConfig(
         this.temperatureHistory,
         "Temperature",
         "#ff6b6b",
         tempUnit,
-        this.config?.temp_min,
-        this.config?.temp_max
+        tempThresholds
       );
       if (this.temperatureChart) {
         this.temperatureChart.data = tempConfig.data;
@@ -396,13 +416,20 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 
     // Update or create humidity chart
     if (humidityCanvas && this.humidityHistory.length > 0) {
+      const humidityThresholds = [
+        this.config?.humidity_min != null
+          ? { value: this.config.humidity_min, color: "rgba(255,180,50,0.5)", label: "Dry" }
+          : null,
+        this.config?.humidity_max != null
+          ? { value: this.config.humidity_max, color: "rgba(80,160,255,0.5)", label: "Wet" }
+          : null
+      ].filter((t): t is { value: number; color: string; label: string } => t != null);
       const humidityConfig = this.getChartConfig(
         this.humidityHistory,
         "Humidity",
         "#4dabf7",
         humidityUnit,
-        this.config?.humidity_min,
-        this.config?.humidity_max
+        humidityThresholds
       );
       if (this.humidityChart) {
         this.humidityChart.data = humidityConfig.data;
@@ -414,13 +441,23 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 
     // Update or create CO2 chart
     if (co2Canvas && this.co2History.length > 0) {
+      const co2Thresholds = [
+        this.config?.co2_good != null
+          ? { value: this.config.co2_good, color: "rgba(100,220,100,0.5)", label: "Good" }
+          : null,
+        this.config?.co2_warning != null
+          ? { value: this.config.co2_warning, color: "rgba(255,180,50,0.5)", label: "Stuffy" }
+          : null,
+        this.config?.co2_poor != null
+          ? { value: this.config.co2_poor, color: "rgba(255,80,80,0.5)", label: "Poor" }
+          : null
+      ].filter((t): t is { value: number; color: string; label: string } => t != null);
       const co2Config = this.getChartConfig(
         this.co2History,
         "CO₂",
         "#a9e34b",
         co2Unit,
-        this.config?.co2_min,
-        this.config?.co2_max
+        co2Thresholds
       );
       if (this.co2Chart) {
         this.co2Chart.data = co2Config.data;
@@ -602,9 +639,8 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       return null;
     }
     const co2Unit = co2State.attributes.unit_of_measurement || "ppm";
-    const co2Min = this.config.co2_min ?? 400;
-    const co2Max = this.config.co2_max ?? 1000;
-    const co2Warning = co2 < co2Min || co2 > co2Max;
+    const co2Good = this.config.co2_good ?? 800;
+    const co2Warning = co2 > co2Good;
     return html`
       <div class="reading">
         <div class="reading-label">CO₂</div>
