@@ -74,10 +74,18 @@ type: custom:air-comfort-card
 temperature_entity: sensor.living_room_temperature
 humidity_entity: sensor.living_room_humidity
 co2_entity: sensor.living_room_co2
+no2_entity: sensor.living_room_no2
+pm25_entity: sensor.living_room_pm25
+pm10_entity: sensor.living_room_pm10
+voc_entity: sensor.living_room_voc
 name: Living Room Comfort
 show_temperature_graph: true
 show_humidity_graph: true
 show_co2_graph: true
+show_no2_graph: true
+show_pm25_graph: true
+show_pm10_graph: true
+show_voc_graph: true
 temp_min: 20
 temp_max: 24
 humidity_min: 40
@@ -85,6 +93,18 @@ humidity_max: 60
 co2_good: 800
 co2_warning: 1200
 co2_poor: 1500
+no2_good: 50
+no2_warning: 150
+no2_poor: 250
+pm25_good: 15
+pm25_warning: 35
+pm25_poor: 75
+pm10_good: 45
+pm10_warning: 100
+pm10_poor: 150
+voc_good: 150
+voc_warning: 250
+voc_poor: 400
 ```
 
 ### Configuration Options
@@ -95,10 +115,18 @@ co2_poor: 1500
 | `temperature_entity` | string | **Yes** | - | Entity ID of your temperature sensor |
 | `humidity_entity` | string | **Yes** | - | Entity ID of your humidity sensor |
 | `co2_entity` | string | No | - | Entity ID of your CO2 sensor |
+| `no2_entity` | string | No | - | Entity ID of your NO2 (Nitrogen Dioxide) sensor |
+| `pm25_entity` | string | No | - | Entity ID of your PM 2.5 sensor |
+| `pm10_entity` | string | No | - | Entity ID of your PM 10 sensor |
+| `voc_entity` | string | No | - | Entity ID of your VOC (Volatile Organic Compounds) sensor |
 | `name` | string | No | `Air Comfort` | Custom title for the card (editable via visual editor) |
 | `show_temperature_graph` | boolean | No | `true` | Show/hide the 24-hour temperature graph |
 | `show_humidity_graph` | boolean | No | `true` | Show/hide the 24-hour humidity graph |
 | `show_co2_graph` | boolean | No | `true` | Show/hide the 24-hour CO2 graph |
+| `show_no2_graph` | boolean | No | `true` | Show/hide the 24-hour NO2 graph |
+| `show_pm25_graph` | boolean | No | `true` | Show/hide the 24-hour PM 2.5 graph |
+| `show_pm10_graph` | boolean | No | `true` | Show/hide the 24-hour PM 10 graph |
+| `show_voc_graph` | boolean | No | `true` | Show/hide the 24-hour VOC graph |
 | `temp_min` | number | No | `20` | Lower bound of comfortable temperature (°C) |
 | `temp_max` | number | No | `24` | Upper bound of comfortable temperature (°C) |
 | `humidity_min` | number | No | `40` | Lower bound of comfortable humidity (%) |
@@ -106,6 +134,18 @@ co2_poor: 1500
 | `co2_good` | number | No | `800` | CO2 threshold for good indoor air (ppm) |
 | `co2_warning` | number | No | `1200` | CO2 threshold for stuffy air, ventilation needed (ppm) |
 | `co2_poor` | number | No | `1500` | CO2 threshold for poor air quality (ppm) |
+| `no2_good` | number | No | `50` | NO2 threshold for good air quality |
+| `no2_warning` | number | No | `150` | NO2 threshold for warning level |
+| `no2_poor` | number | No | `250` | NO2 threshold for poor air quality |
+| `pm25_good` | number | No | `15` | PM 2.5 threshold for good air quality (µg/m³) |
+| `pm25_warning` | number | No | `35` | PM 2.5 threshold for warning level (µg/m³) |
+| `pm25_poor` | number | No | `75` | PM 2.5 threshold for poor air quality (µg/m³) |
+| `pm10_good` | number | No | `45` | PM 10 threshold for good air quality (µg/m³) |
+| `pm10_warning` | number | No | `100` | PM 10 threshold for warning level (µg/m³) |
+| `pm10_poor` | number | No | `150` | PM 10 threshold for poor air quality (µg/m³) |
+| `voc_good` | number | No | `150` | VOC threshold for good air quality |
+| `voc_warning` | number | No | `250` | VOC threshold for warning level |
+| `voc_poor` | number | No | `400` | VOC threshold for poor air quality |
 
 ## How It Works
 

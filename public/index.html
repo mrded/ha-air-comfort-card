@@ -152,6 +152,22 @@
         <input type="range" id="co2" min="300" max="2500" value="450" step="1">
       </div>
       <div class="control">
+        <label>NO₂: <strong id="no2-value">30</strong></label>
+        <input type="range" id="no2" min="0" max="500" value="30" step="1">
+      </div>
+      <div class="control">
+        <label>PM 2.5: <strong id="pm25-value">10</strong> µg/m³</label>
+        <input type="range" id="pm25" min="0" max="200" value="10" step="0.1">
+      </div>
+      <div class="control">
+        <label>PM 10: <strong id="pm10-value">20</strong> µg/m³</label>
+        <input type="range" id="pm10" min="0" max="300" value="20" step="0.1">
+      </div>
+      <div class="control">
+        <label>VOC: <strong id="voc-value">100</strong></label>
+        <input type="range" id="voc" min="0" max="600" value="100" step="1">
+      </div>
+      <div class="control">
         <label>Card Options</label>
         <div class="checkboxes">
           <label class="checkbox-option">
@@ -165,6 +181,22 @@
           <label class="checkbox-option">
             <input type="checkbox" data-setting="show_co2_graph" checked>
             <span>Show CO₂ Graph</span>
+          </label>
+          <label class="checkbox-option">
+            <input type="checkbox" data-setting="show_no2_graph" checked>
+            <span>Show NO₂ Graph</span>
+          </label>
+          <label class="checkbox-option">
+            <input type="checkbox" data-setting="show_pm25_graph" checked>
+            <span>Show PM 2.5 Graph</span>
+          </label>
+          <label class="checkbox-option">
+            <input type="checkbox" data-setting="show_pm10_graph" checked>
+            <span>Show PM 10 Graph</span>
+          </label>
+          <label class="checkbox-option">
+            <input type="checkbox" data-setting="show_voc_graph" checked>
+            <span>Show VOC Graph</span>
           </label>
         </div>
       </div>
@@ -194,6 +226,54 @@
           <span class="range-label">CO₂ Poor (ppm):</span>
           <input type="number" data-setting="co2_poor" value="1500" step="50" style="width:70px">
         </div>
+        <div class="range-row">
+          <span class="range-label">NO₂ Good:</span>
+          <input type="number" data-setting="no2_good" value="50" step="10" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">NO₂ Warning:</span>
+          <input type="number" data-setting="no2_warning" value="150" step="10" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">NO₂ Poor:</span>
+          <input type="number" data-setting="no2_poor" value="250" step="10" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">PM 2.5 Good (µg/m³):</span>
+          <input type="number" data-setting="pm25_good" value="15" step="5" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">PM 2.5 Warning (µg/m³):</span>
+          <input type="number" data-setting="pm25_warning" value="35" step="5" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">PM 2.5 Poor (µg/m³):</span>
+          <input type="number" data-setting="pm25_poor" value="75" step="5" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">PM 10 Good (µg/m³):</span>
+          <input type="number" data-setting="pm10_good" value="45" step="5" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">PM 10 Warning (µg/m³):</span>
+          <input type="number" data-setting="pm10_warning" value="100" step="10" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">PM 10 Poor (µg/m³):</span>
+          <input type="number" data-setting="pm10_poor" value="150" step="10" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">VOC Good:</span>
+          <input type="number" data-setting="voc_good" value="150" step="10" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">VOC Warning:</span>
+          <input type="number" data-setting="voc_warning" value="250" step="10" style="width:70px">
+        </div>
+        <div class="range-row">
+          <span class="range-label">VOC Poor:</span>
+          <input type="number" data-setting="voc_poor" value="400" step="10" style="width:70px">
+        </div>
       </div>
     </div>
   </div>
@@ -209,15 +289,27 @@
     const tempSlider = document.getElementById('temperature');
     const humiditySlider = document.getElementById('humidity');
     const co2Slider = document.getElementById('co2');
+    const no2Slider = document.getElementById('no2');
+    const pm25Slider = document.getElementById('pm25');
+    const pm10Slider = document.getElementById('pm10');
+    const vocSlider = document.getElementById('voc');
     const tempValue = document.getElementById('temp-value');
     const humidityValue = document.getElementById('humidity-value');
     const co2Value = document.getElementById('co2-value');
+    const no2Value = document.getElementById('no2-value');
+    const pm25Value = document.getElementById('pm25-value');
+    const pm10Value = document.getElementById('pm10-value');
+    const vocValue = document.getElementById('voc-value');
     let latestHistoryResponse = [];
     let temperatureEntityId = 'sensor.temperature';
     let humidityEntityId = 'sensor.humidity';
     let co2EntityId = 'sensor.co2';
+    let no2EntityId = 'sensor.no2';
+    let pm25EntityId = 'sensor.pm25';
+    let pm10EntityId = 'sensor.pm10';
+    let vocEntityId = 'sensor.voc';
 
-    function createHass(temperature, humidity, co2) {
+    function createHass(temperature, humidity, co2, no2, pm25, pm10, voc) {
       return {
         states: {
           [temperatureEntityId]: {
@@ -231,6 +323,22 @@
           [co2EntityId]: {
             state: String(co2),
             attributes: { unit_of_measurement: 'ppm' }
+          },
+          [no2EntityId]: {
+            state: String(no2),
+            attributes: { unit_of_measurement: '' }
+          },
+          [pm25EntityId]: {
+            state: String(pm25),
+            attributes: { unit_of_measurement: 'µg/m³' }
+          },
+          [pm10EntityId]: {
+            state: String(pm10),
+            attributes: { unit_of_measurement: 'µg/m³' }
+          },
+          [vocEntityId]: {
+            state: String(voc),
+            attributes: { unit_of_measurement: '' }
           }
         },
         callService: async () => {},
@@ -242,13 +350,29 @@
       show_temperature_graph: true,
       show_humidity_graph: true,
       show_co2_graph: true,
+      show_no2_graph: true,
+      show_pm25_graph: true,
+      show_pm10_graph: true,
+      show_voc_graph: true,
       temp_min: 20,
       temp_max: 24,
       humidity_min: 40,
       humidity_max: 60,
       co2_good: 800,
       co2_warning: 1200,
-      co2_poor: 1500
+      co2_poor: 1500,
+      no2_good: 50,
+      no2_warning: 150,
+      no2_poor: 250,
+      pm25_good: 15,
+      pm25_warning: 35,
+      pm25_poor: 75,
+      pm10_good: 45,
+      pm10_warning: 100,
+      pm10_poor: 150,
+      voc_good: 150,
+      voc_warning: 250,
+      voc_poor: 400
     };
 
     function applyConfig() {
@@ -261,6 +385,10 @@
           temperature_entity: temperatureEntityId,
           humidity_entity: humidityEntityId,
           co2_entity: co2EntityId,
+          no2_entity: no2EntityId,
+          pm25_entity: pm25EntityId,
+          pm10_entity: pm10EntityId,
+          voc_entity: vocEntityId,
           name,
           ...settings
         });
@@ -272,12 +400,20 @@
       const temp = parseFloat(tempSlider.value);
       const humidity = parseFloat(humiditySlider.value);
       const co2 = parseFloat(co2Slider.value);
+      const no2 = parseFloat(no2Slider.value);
+      const pm25 = parseFloat(pm25Slider.value);
+      const pm10 = parseFloat(pm10Slider.value);
+      const voc = parseFloat(vocSlider.value);
       tempValue.textContent = temp.toFixed(1);
       humidityValue.textContent = humidity.toFixed(1);
       co2Value.textContent = co2.toFixed(0);
+      no2Value.textContent = no2.toFixed(0);
+      pm25Value.textContent = pm25.toFixed(1);
+      pm10Value.textContent = pm10.toFixed(1);
+      vocValue.textContent = voc.toFixed(0);
       cards.forEach(({ element }) => {
         if (element) {
-          element.hass = createHass(temp, humidity, co2);
+          element.hass = createHass(temp, humidity, co2, no2, pm25, pm10, voc);
           element.lastHistoryFetch = 0;
           element.fetchHistory?.(); // Pull mock history so charts render in the playground
         }
@@ -287,6 +423,10 @@
     tempSlider.addEventListener('input', update);
     humiditySlider.addEventListener('input', update);
     co2Slider.addEventListener('input', update);
+    no2Slider.addEventListener('input', update);
+    pm25Slider.addEventListener('input', update);
+    pm10Slider.addEventListener('input', update);
+    vocSlider.addEventListener('input', update);
     document
       .querySelectorAll('input[data-setting][type="checkbox"]')
       .forEach(input => {
@@ -365,7 +505,7 @@
           throw new Error('Mock history should be an array of entity histories');
         }
         latestHistoryResponse = data;
-        const [temperatureHistory = [], humidityHistory = [], co2History = []] = data;
+        const [temperatureHistory = [], humidityHistory = [], co2History = [], no2History = [], pm25History = [], pm10History = [], vocHistory = []] = data;
         if (temperatureHistory[0]?.entity_id) {
           temperatureEntityId = temperatureHistory[0].entity_id;
         }
@@ -374,6 +514,18 @@
         }
         if (co2History[0]?.entity_id) {
           co2EntityId = co2History[0].entity_id;
+        }
+        if (no2History[0]?.entity_id) {
+          no2EntityId = no2History[0].entity_id;
+        }
+        if (pm25History[0]?.entity_id) {
+          pm25EntityId = pm25History[0].entity_id;
+        }
+        if (pm10History[0]?.entity_id) {
+          pm10EntityId = pm10History[0].entity_id;
+        }
+        if (vocHistory[0]?.entity_id) {
+          vocEntityId = vocHistory[0].entity_id;
         }
         applyHistoryDefaults(temperatureHistory, humidityHistory, co2History);
       } catch (error) {
