@@ -14,6 +14,15 @@ export interface ComfortZoneOptions {
   humidityMax?: number;
 }
 
+// Temperature conversion utilities
+export function celsiusToFahrenheit(celsius: number): number {
+  return (celsius * 9) / 5 + 32;
+}
+
+export function fahrenheitToCelsius(fahrenheit: number): number {
+  return ((fahrenheit - 32) * 5) / 9;
+}
+
 // Comfort zone calculation based on temperature and humidity
 export function calculateComfortZone(
   temp: number,

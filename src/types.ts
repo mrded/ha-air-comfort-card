@@ -4,11 +4,14 @@ export interface CardConfig {
   humidity_entity: string;
   co2_entity?: string;
   name?: string;
+  temperature_unit?: 'C' | 'F';
   show_temperature_graph?: boolean;
   show_humidity_graph?: boolean;
   show_co2_graph?: boolean;
-  temp_min?: number;
-  temp_max?: number;
+  temp_c_min?: number;
+  temp_c_max?: number;
+  temp_f_min?: number;
+  temp_f_max?: number;
   humidity_min?: number;
   humidity_max?: number;
   co2_good?: number;

@@ -81,6 +81,7 @@ pm25_entity: sensor.living_room_pm25
 pm10_entity: sensor.living_room_pm10
 voc_entity: sensor.living_room_voc
 name: Living Room Comfort
+temperature_unit: C
 show_temperature_graph: true
 show_humidity_graph: true
 show_co2_graph: true
@@ -88,8 +89,10 @@ show_no2_graph: true
 show_pm25_graph: true
 show_pm10_graph: true
 show_voc_graph: true
-temp_min: 20
-temp_max: 24
+temp_c_min: 20
+temp_c_max: 24
+temp_f_min: 68
+temp_f_max: 75
 humidity_min: 40
 humidity_max: 60
 co2_good: 800
@@ -122,6 +125,7 @@ voc_poor: 400
 | `pm10_entity` | string | No | - | Entity ID of your PM 10 sensor |
 | `voc_entity` | string | No | - | Entity ID of your VOC (Volatile Organic Compounds) sensor |
 | `name` | string | No | `Air Comfort` | Custom title for the card (editable via visual editor) |
+| `temperature_unit` | string | No | `C` | Temperature display unit: `C` for Celsius or `F` for Fahrenheit |
 | `show_temperature_graph` | boolean | No | `true` | Show/hide the 24-hour temperature graph |
 | `show_humidity_graph` | boolean | No | `true` | Show/hide the 24-hour humidity graph |
 | `show_co2_graph` | boolean | No | `true` | Show/hide the 24-hour CO2 graph |
@@ -129,8 +133,10 @@ voc_poor: 400
 | `show_pm25_graph` | boolean | No | `true` | Show/hide the 24-hour PM 2.5 graph |
 | `show_pm10_graph` | boolean | No | `true` | Show/hide the 24-hour PM 10 graph |
 | `show_voc_graph` | boolean | No | `true` | Show/hide the 24-hour VOC graph |
-| `temp_min` | number | No | `20` | Lower bound of comfortable temperature (°C) |
-| `temp_max` | number | No | `24` | Upper bound of comfortable temperature (°C) |
+| `temp_c_min` | number | No | `20` | Lower bound of comfortable temperature in Celsius |
+| `temp_c_max` | number | No | `24` | Upper bound of comfortable temperature in Celsius |
+| `temp_f_min` | number | No | `68` | Lower bound of comfortable temperature in Fahrenheit |
+| `temp_f_max` | number | No | `75` | Upper bound of comfortable temperature in Fahrenheit |
 | `humidity_min` | number | No | `40` | Lower bound of comfortable humidity (%) |
 | `humidity_max` | number | No | `60` | Upper bound of comfortable humidity (%) |
 | `co2_good` | number | No | `800` | CO2 threshold for good indoor air (ppm) |
