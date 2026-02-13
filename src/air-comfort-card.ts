@@ -758,30 +758,23 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     }
 
     // Convert temperature to Celsius for comfort zone calculation
-    // The sensor may report in C or F, so we need to normalize to C
-    let temperatureInCelsius = temperature;
-    if (tempUnit === "°F" || tempUnit === "F") {
-      temperatureInCelsius = fahrenheitToCelsius(temperature);
-    }
+    // Comfort zone thresholds (temp_min, temp_max) are always in Celsius
+    // We detect the sensor's unit from its unit_of_measurement attribute
+    const sensorIsF = tempUnit === "°F" || tempUnit === "F";
+    let temperatureInCelsius = sensorIsF ? fahrenheitToCelsius(temperature) : temperature;
 
     // Determine display values based on user preference
     const preferredUnit = this.config.temperature_unit || "C";
-    let displayTemperature = temperature;
+    let displayTemperature: number;
     let displayUnit: string;
 
-    // If user wants Fahrenheit but sensor reports Celsius, convert
-    if (preferredUnit === "F" && (tempUnit === "°C" || tempUnit === "C")) {
-      displayTemperature = celsiusToFahrenheit(temperature);
+    // Calculate display temperature based on user preference and sensor unit
+    if (preferredUnit === "F") {
+      displayTemperature = sensorIsF ? temperature : celsiusToFahrenheit(temperature);
       displayUnit = "°F";
-    }
-    // If user wants Celsius but sensor reports Fahrenheit, convert
-    else if (preferredUnit === "C" && (tempUnit === "°F" || tempUnit === "F")) {
-      displayTemperature = fahrenheitToCelsius(temperature);
+    } else {
+      displayTemperature = sensorIsF ? fahrenheitToCelsius(temperature) : temperature;
       displayUnit = "°C";
-    }
-    // Otherwise use the sensor's native values with normalized unit
-    else {
-      displayUnit = preferredUnit === "F" ? "°F" : "°C";
     }
 
     const {
