@@ -70,6 +70,10 @@ export class AirComfortCardEditor extends LitElement {
 
     const temperatureUnit = this.config.temperature_unit || "C";
     const tempUnitLabel = temperatureUnit === "F" ? "°F" : "°C";
+    const tempMinField = temperatureUnit === "F" ? "temp_f_min" : "temp_c_min";
+    const tempMaxField = temperatureUnit === "F" ? "temp_f_max" : "temp_c_max";
+    const tempDefaultMin = temperatureUnit === "F" ? 68 : 20;
+    const tempDefaultMax = temperatureUnit === "F" ? 75 : 24;
 
     return html`
       <div class="card-config">
@@ -79,7 +83,7 @@ export class AirComfortCardEditor extends LitElement {
           <div class="section-title">Temperature</div>
           ${this._renderEntityField("temperature_entity", "Temperature Entity", "temperature")}
           ${this._renderTemperatureUnitSelector()}
-          ${this._renderRangeField("temp_min", "temp_max", `Comfort Range (${tempUnitLabel})`, 20, 24)}
+          ${this._renderRangeField(tempMinField, tempMaxField, `Comfort Range (${tempUnitLabel})`, tempDefaultMin, tempDefaultMax)}
           ${this._renderCheckbox("show_temperature_graph", "Show Graph")}
         </div>
 
@@ -87,7 +91,7 @@ export class AirComfortCardEditor extends LitElement {
           <div class="section-title">Humidity</div>
           ${this._renderEntityField("humidity_entity", "Humidity Entity", "humidity")}
           ${this._renderRangeField("humidity_min", "humidity_max", "Comfort Range (%)", 40, 60)}
-          ${this._renderCheckbox("show_humidity_graph", "Show Graph")}
+          ${this._renderCheckbox("show_temperature_graph", "Show Graph")}
         </div>
 
         <div class="section">

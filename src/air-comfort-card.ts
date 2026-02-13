@@ -64,8 +64,10 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       show_pm25_graph: true,
       show_pm10_graph: true,
       show_voc_graph: true,
-      temp_min: 20,
-      temp_max: 24,
+      temp_c_min: 20,
+      temp_c_max: 24,
+      temp_f_min: 68,
+      temp_f_max: 75,
       humidity_min: 40,
       humidity_max: 60,
       co2_good: 800,
@@ -106,8 +108,10 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       show_pm25_graph: true,
       show_pm10_graph: true,
       show_voc_graph: true,
-      temp_min: 20,
-      temp_max: 24,
+      temp_c_min: 20,
+      temp_c_max: 24,
+      temp_f_min: 68,
+      temp_f_max: 75,
       humidity_min: 40,
       humidity_max: 60,
       co2_good: 800,
@@ -513,12 +517,17 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 
     // Update or create temperature chart
     if (tempCanvas && this.temperatureHistory.length > 0) {
+      // Get the appropriate temperature thresholds based on the selected unit
+      const preferredUnit = this.config?.temperature_unit || "C";
+      const tempMin = preferredUnit === "F" ? this.config?.temp_f_min : this.config?.temp_c_min;
+      const tempMax = preferredUnit === "F" ? this.config?.temp_f_max : this.config?.temp_c_max;
+      
       const tempThresholds = [
-        this.config?.temp_min != null
-          ? { value: this.config.temp_min, color: "rgba(100,150,255,0.5)", label: "Cold" }
+        tempMin != null
+          ? { value: tempMin, color: "rgba(100,150,255,0.5)", label: "Cold" }
           : null,
-        this.config?.temp_max != null
-          ? { value: this.config.temp_max, color: "rgba(255,100,80,0.5)", label: "Hot" }
+        tempMax != null
+          ? { value: tempMax, color: "rgba(255,100,80,0.5)", label: "Hot" }
           : null
       ].filter((t): t is { value: number; color: string; label: string } => t != null);
       const tempConfig = this.getChartConfig(
@@ -758,7 +767,6 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     }
 
     // Convert temperature to Celsius for comfort zone calculation
-    // Comfort zone thresholds (temp_min, temp_max) are always in Celsius
     // We detect the sensor's unit from its unit_of_measurement attribute
     const sensorIsF = tempUnit === "°F" || tempUnit === "F";
     const temperatureInCelsius = sensorIsF ? fahrenheitToCelsius(temperature) : temperature;
@@ -777,14 +785,29 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       displayUnit = "°C";
     }
 
+    // Select the appropriate temperature range based on the preferred unit
+    // If using Fahrenheit ranges, convert them to Celsius for the comfort zone calculation
+    let tempMinInCelsius: number;
+    let tempMaxInCelsius: number;
+    
+    if (preferredUnit === "F") {
+      // Use Fahrenheit ranges and convert to Celsius for calculation
+      tempMinInCelsius = fahrenheitToCelsius(this.config.temp_f_min ?? 68);
+      tempMaxInCelsius = fahrenheitToCelsius(this.config.temp_f_max ?? 75);
+    } else {
+      // Use Celsius ranges directly
+      tempMinInCelsius = this.config.temp_c_min ?? 20;
+      tempMaxInCelsius = this.config.temp_c_max ?? 24;
+    }
+
     const {
       angle,
       radialDistance,
       isInComfortZone,
       statusText
     } = calculateComfortZone(temperatureInCelsius, humidity, {
-      tempMin: this.config.temp_min,
-      tempMax: this.config.temp_max,
+      tempMin: tempMinInCelsius,
+      tempMax: tempMaxInCelsius,
       humidityMin: this.config.humidity_min,
       humidityMax: this.config.humidity_max
     });
