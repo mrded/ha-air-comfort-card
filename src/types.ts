@@ -4,6 +4,7 @@ export interface CardConfig {
   humidity_entity: string;
   co2_entity?: string;
   name?: string;
+  temperature_unit?: 'C' | 'F';
   show_temperature_graph?: boolean;
   show_humidity_graph?: boolean;
   show_co2_graph?: boolean;

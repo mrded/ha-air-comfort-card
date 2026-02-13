@@ -79,6 +79,7 @@ pm25_entity: sensor.living_room_pm25
 pm10_entity: sensor.living_room_pm10
 voc_entity: sensor.living_room_voc
 name: Living Room Comfort
+temperature_unit: C
 show_temperature_graph: true
 show_humidity_graph: true
 show_co2_graph: true
@@ -120,6 +121,7 @@ voc_poor: 400
 | `pm10_entity` | string | No | - | Entity ID of your PM 10 sensor |
 | `voc_entity` | string | No | - | Entity ID of your VOC (Volatile Organic Compounds) sensor |
 | `name` | string | No | `Air Comfort` | Custom title for the card (editable via visual editor) |
+| `temperature_unit` | string | No | `C` | Temperature display unit: `C` for Celsius or `F` for Fahrenheit |
 | `show_temperature_graph` | boolean | No | `true` | Show/hide the 24-hour temperature graph |
 | `show_humidity_graph` | boolean | No | `true` | Show/hide the 24-hour humidity graph |
 | `show_co2_graph` | boolean | No | `true` | Show/hide the 24-hour CO2 graph |

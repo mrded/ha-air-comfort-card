@@ -9,7 +9,7 @@ import {
 import "chartjs-adapter-date-fns";
 import { CardConfig, HomeAssistant, HistoryState, LovelaceCard } from "./types";
 import { cardStyles } from "./styles";
-import { calculateComfortZone } from "./comfort-zone";
+import { calculateComfortZone, celsiusToFahrenheit, fahrenheitToCelsius } from "./comfort-zone";
 import "./air-comfort-card-editor";
 
 Chart.register(...registerables);
@@ -56,6 +56,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       pm25_entity: "",
       pm10_entity: "",
       voc_entity: "",
+      temperature_unit: "C",
       show_temperature_graph: true,
       show_humidity_graph: true,
       show_co2_graph: true,
@@ -97,6 +98,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       throw new Error("You need to define a humidity_entity");
     }
     this.config = {
+      temperature_unit: "C",
       show_temperature_graph: true,
       show_humidity_graph: true,
       show_co2_graph: true,
@@ -755,12 +757,41 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       `;
     }
 
+    // Convert temperature to Celsius for comfort zone calculation
+    // The sensor may report in C or F, so we need to normalize to C
+    let temperatureInCelsius = temperature;
+    if (tempUnit === "°F" || tempUnit === "F") {
+      temperatureInCelsius = fahrenheitToCelsius(temperature);
+    }
+
+    // Determine display values based on user preference
+    const preferredUnit = this.config.temperature_unit || "C";
+    let displayTemperature = temperature;
+    let displayUnit = tempUnit;
+    
+    // If user wants Fahrenheit but sensor reports Celsius, convert
+    if (preferredUnit === "F" && (tempUnit === "°C" || tempUnit === "C")) {
+      displayTemperature = celsiusToFahrenheit(temperature);
+      displayUnit = "°F";
+    }
+    // If user wants Celsius but sensor reports Fahrenheit, convert
+    else if (preferredUnit === "C" && (tempUnit === "°F" || tempUnit === "F")) {
+      displayTemperature = fahrenheitToCelsius(temperature);
+      displayUnit = "°C";
+    }
+    // Otherwise use the sensor's native values
+    else if (preferredUnit === "F") {
+      displayUnit = "°F";
+    } else {
+      displayUnit = "°C";
+    }
+
     const {
       angle,
       radialDistance,
       isInComfortZone,
       statusText
-    } = calculateComfortZone(temperature, humidity, {
+    } = calculateComfortZone(temperatureInCelsius, humidity, {
       tempMin: this.config.temp_min,
       tempMax: this.config.temp_max,
       humidityMin: this.config.humidity_min,
@@ -825,8 +856,8 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
                     <span class="warning-icon">⚠</span>
                   `
                 : ""}
-              ${temperature.toFixed(1)}<span class="reading-unit"
-                >${tempUnit}</span
+              ${displayTemperature.toFixed(1)}<span class="reading-unit"
+                >${displayUnit}</span
               >
             </div>
           </div>

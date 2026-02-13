@@ -75,6 +75,7 @@ export class AirComfortCardEditor extends LitElement {
         <div class="section">
           <div class="section-title">Temperature</div>
           ${this._renderEntityField("temperature_entity", "Temperature Entity", "temperature")}
+          ${this._renderTemperatureUnitSelector()}
           ${this._renderRangeField("temp_min", "temp_max", "Comfort Range (°C)", 20, 24)}
           ${this._renderCheckbox("show_temperature_graph", "Show Graph")}
         </div>
@@ -226,6 +227,23 @@ export class AirComfortCardEditor extends LitElement {
     `;
   }
 
+  private _renderTemperatureUnitSelector() {
+    const currentUnit = this.config?.temperature_unit || "C";
+    return html`
+      <div class="option">
+        <label for="temperature_unit">Display Unit</label>
+        <select
+          id="temperature_unit"
+          .value=${currentUnit}
+          @change=${this._valueChanged}
+        >
+          <option value="C" ?selected=${currentUnit === "C"}>°C (Celsius)</option>
+          <option value="F" ?selected=${currentUnit === "F"}>°F (Fahrenheit)</option>
+        </select>
+      </div>
+    `;
+  }
+
   // --- Event handlers ---
 
   private _entityChanged(field: EntityField) {
@@ -235,11 +253,13 @@ export class AirComfortCardEditor extends LitElement {
   }
 
   private _valueChanged(ev: Event): void {
-    const target = ev.target as HTMLInputElement;
+    const target = ev.target as HTMLInputElement | HTMLSelectElement;
     const id = target.id;
 
     let value: string | boolean | number | undefined;
-    if (target.type === "checkbox") {
+    if (target instanceof HTMLSelectElement) {
+      value = target.value;
+    } else if (target.type === "checkbox") {
       value = target.checked;
     } else if (target.type === "number") {
       value = target.value === "" ? undefined : parseFloat(target.value);

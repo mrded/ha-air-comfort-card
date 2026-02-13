@@ -201,6 +201,13 @@
         </div>
       </div>
       <div class="control">
+        <label for="temperature_unit">Temperature Display Unit</label>
+        <select id="temperature_unit" data-setting="temperature_unit" style="padding: 6px 8px; border: 1px solid #444; border-radius: 4px; background: #333; color: #fff; font-size: 14px; width: 100%;">
+          <option value="C">°C (Celsius)</option>
+          <option value="F">°F (Fahrenheit)</option>
+        </select>
+      </div>
+      <div class="control">
         <label>Comfort Ranges</label>
         <div class="range-row">
           <span class="range-label">Temperature (°C):</span>
@@ -347,6 +354,7 @@
     }
 
     const settings = {
+      temperature_unit: 'C',
       show_temperature_graph: true,
       show_humidity_graph: true,
       show_co2_graph: true,
@@ -456,6 +464,22 @@
             return;
           }
           settings[key] = parseFloat(target.value);
+          applyConfig();
+        });
+      });
+    document
+      .querySelectorAll('select[data-setting]')
+      .forEach(select => {
+        select.addEventListener('change', event => {
+          const target = event.currentTarget;
+          if (!(target instanceof HTMLSelectElement)) {
+            return;
+          }
+          const key = target.dataset.setting;
+          if (!key) {
+            return;
+          }
+          settings[key] = target.value;
           applyConfig();
         });
       });
