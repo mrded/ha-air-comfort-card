@@ -22,6 +22,8 @@ A custom Home Assistant card that visualizes indoor air comfort using temperatur
 
 ### HACS (Recommended)
 
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mrded&repository=ha-air-comfort-card&category=plugin)
+
 1. Open HACS in your Home Assistant instance
 2. Click on "Frontend"
 3. Click the three dots in the top right corner
