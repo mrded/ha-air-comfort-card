@@ -201,12 +201,19 @@
         </div>
       </div>
       <div class="control">
+        <label for="temperature_unit">Temperature Display Unit</label>
+        <select id="temperature_unit" data-setting="temperature_unit" style="padding: 6px 8px; border: 1px solid #444; border-radius: 4px; background: #333; color: #fff; font-size: 14px; width: 100%;">
+          <option value="C">°C (Celsius)</option>
+          <option value="F">°F (Fahrenheit)</option>
+        </select>
+      </div>
+      <div class="control">
         <label>Comfort Ranges</label>
         <div class="range-row">
-          <span class="range-label">Temperature (°C):</span>
-          <input type="number" data-setting="temp_min" value="20" step="0.5" style="width:70px">
+          <span class="range-label" id="temp-range-label">Temperature (°C):</span>
+          <input type="number" id="temp-min-input" data-setting="temp_c_min" value="20" step="0.5" style="width:70px">
           <span>–</span>
-          <input type="number" data-setting="temp_max" value="24" step="0.5" style="width:70px">
+          <input type="number" id="temp-max-input" data-setting="temp_c_max" value="24" step="0.5" style="width:70px">
         </div>
         <div class="range-row">
           <span class="range-label">Humidity (%):</span>
@@ -347,6 +354,7 @@
     }
 
     const settings = {
+      temperature_unit: 'C',
       show_temperature_graph: true,
       show_humidity_graph: true,
       show_co2_graph: true,
@@ -354,8 +362,10 @@
       show_pm25_graph: true,
       show_pm10_graph: true,
       show_voc_graph: true,
-      temp_min: 20,
-      temp_max: 24,
+      temp_c_min: 20,
+      temp_c_max: 24,
+      temp_f_min: 68,
+      temp_f_max: 75,
       humidity_min: 40,
       humidity_max: 60,
       co2_good: 800,
@@ -456,6 +466,54 @@
             return;
           }
           settings[key] = parseFloat(target.value);
+          applyConfig();
+        });
+      });
+    document
+      .querySelectorAll('select[data-setting]')
+      .forEach(select => {
+        select.addEventListener('change', event => {
+          const target = event.currentTarget;
+          if (!(target instanceof HTMLSelectElement)) {
+            return;
+          }
+          const key = target.dataset.setting;
+          if (!key) {
+            return;
+          }
+          settings[key] = target.value;
+          
+          // Update temperature range label and inputs when unit changes
+          if (key === 'temperature_unit') {
+            const tempRangeLabel = document.getElementById('temp-range-label');
+            const tempMinInput = document.getElementById('temp-min-input');
+            const tempMaxInput = document.getElementById('temp-max-input');
+            
+            if (target.value === 'F') {
+              // Switch to Fahrenheit
+              if (tempRangeLabel) tempRangeLabel.textContent = 'Temperature (°F):';
+              if (tempMinInput) {
+                tempMinInput.dataset.setting = 'temp_f_min';
+                tempMinInput.value = String(settings.temp_f_min);
+              }
+              if (tempMaxInput) {
+                tempMaxInput.dataset.setting = 'temp_f_max';
+                tempMaxInput.value = String(settings.temp_f_max);
+              }
+            } else {
+              // Switch to Celsius
+              if (tempRangeLabel) tempRangeLabel.textContent = 'Temperature (°C):';
+              if (tempMinInput) {
+                tempMinInput.dataset.setting = 'temp_c_min';
+                tempMinInput.value = String(settings.temp_c_min);
+              }
+              if (tempMaxInput) {
+                tempMaxInput.dataset.setting = 'temp_c_max';
+                tempMaxInput.value = String(settings.temp_c_max);
+              }
+            }
+          }
+          
           applyConfig();
         });
       });

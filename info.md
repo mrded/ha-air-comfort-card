@@ -7,7 +7,7 @@ A custom Home Assistant card that visualizes indoor air comfort using temperatur
 ## Features
 
 - Circular comfort dial with color-coded zones and a moving indicator dot
-- Temperature and humidity readings
+- Temperature and humidity readings with Celsius/Fahrenheit toggle
 - 24-hour history charts for temperature, humidity, CO2, NO2, PM 2.5, PM 10, and VOC
 - Configurable comfort thresholds
 - Visual editor for easy setup
