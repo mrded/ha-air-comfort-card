@@ -761,7 +761,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     // Comfort zone thresholds (temp_min, temp_max) are always in Celsius
     // We detect the sensor's unit from its unit_of_measurement attribute
     const sensorIsF = tempUnit === "°F" || tempUnit === "F";
-    let temperatureInCelsius = sensorIsF ? fahrenheitToCelsius(temperature) : temperature;
+    const temperatureInCelsius = sensorIsF ? fahrenheitToCelsius(temperature) : temperature;
 
     // Determine display values based on user preference
     const preferredUnit = this.config.temperature_unit || "C";

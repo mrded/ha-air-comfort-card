@@ -68,6 +68,9 @@ export class AirComfortCardEditor extends LitElement {
       return nothing;
     }
 
+    const temperatureUnit = this.config.temperature_unit || "C";
+    const tempUnitLabel = temperatureUnit === "F" ? "°F" : "°C";
+
     return html`
       <div class="card-config">
         ${this._renderTextField("name", "Card Title", "Air Comfort")}
@@ -76,7 +79,7 @@ export class AirComfortCardEditor extends LitElement {
           <div class="section-title">Temperature</div>
           ${this._renderEntityField("temperature_entity", "Temperature Entity", "temperature")}
           ${this._renderTemperatureUnitSelector()}
-          ${this._renderRangeField("temp_min", "temp_max", "Comfort Range (°C)", 20, 24)}
+          ${this._renderRangeField("temp_min", "temp_max", `Comfort Range (${tempUnitLabel})`, 20, 24)}
           ${this._renderCheckbox("show_temperature_graph", "Show Graph")}
         </div>
 
