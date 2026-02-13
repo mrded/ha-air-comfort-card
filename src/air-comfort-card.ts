@@ -767,8 +767,8 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     // Determine display values based on user preference
     const preferredUnit = this.config.temperature_unit || "C";
     let displayTemperature = temperature;
-    let displayUnit = tempUnit;
-    
+    let displayUnit: string;
+
     // If user wants Fahrenheit but sensor reports Celsius, convert
     if (preferredUnit === "F" && (tempUnit === "°C" || tempUnit === "C")) {
       displayTemperature = celsiusToFahrenheit(temperature);
@@ -779,11 +779,9 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       displayTemperature = fahrenheitToCelsius(temperature);
       displayUnit = "°C";
     }
-    // Otherwise use the sensor's native values
-    else if (preferredUnit === "F") {
-      displayUnit = "°F";
-    } else {
-      displayUnit = "°C";
+    // Otherwise use the sensor's native values with normalized unit
+    else {
+      displayUnit = preferredUnit === "F" ? "°F" : "°C";
     }
 
     const {
