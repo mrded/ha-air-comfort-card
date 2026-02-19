@@ -21,21 +21,32 @@
     }
     .layout {
       display: flex;
-      flex-direction: column;
       gap: 24px;
+      align-items: flex-start;
     }
     .cards-grid {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
+      flex: 1 1 0;
+      min-width: 0;
+      align-content: flex-start;
     }
     .card-demo {
       background: #1a1a1a;
       padding: 16px;
       border-radius: 12px;
-      flex: 1 1 220px;
-      max-width: 420px;
+      flex: 0 0 auto;
       border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .card-demo.small {
+      width: 240px;
+    }
+    .card-demo.medium {
+      width: 320px;
+    }
+    .card-demo.large {
+      width: 100%;
     }
     .card-demo .demo-label {
       margin: 0 0 12px;
@@ -44,42 +55,30 @@
       letter-spacing: 0.08em;
       color: rgba(255, 255, 255, 0.7);
     }
-    .card-demo.small {
-      max-width: 240px;
-    }
-    .card-demo.medium {
-      max-width: 320px;
-    }
-    .card-demo.large {
-      max-width: 420px;
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex: 0 0 300px;
     }
     .controls {
       background: #222;
       padding: 20px;
       border-radius: 12px;
-      margin-bottom: 20px;
-      max-width: 540px;
+    }
+    .section-label {
+      margin: 0 0 16px;
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.5);
     }
     .control {
       margin-bottom: 15px;
     }
     .control:last-child {
       margin-bottom: 0;
-    }
-    .checkboxes {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 10px;
-    }
-    .checkbox-option {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-    }
-    .checkbox-option input {
-      width: 16px;
-      height: 16px;
     }
     label {
       display: block;
@@ -90,23 +89,14 @@
       width: 100%;
       accent-color: #4CAF50;
     }
-    input[type="number"] {
-      padding: 4px 8px;
-      border: 1px solid #444;
-      border-radius: 4px;
-      background: #333;
-      color: #fff;
-      font-size: 14px;
+    .editor-container {
+      flex: 1 1 400px;
+      background: #1e1e1e;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
-    .range-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 8px;
-    }
-    .range-label {
-      min-width: 130px;
-      font-size: 14px;
+    .editor-container .section-label {
+      padding: 16px 16px 0;
     }
     air-comfort-card {
       display: block;
@@ -117,6 +107,15 @@
       --card-background-color: #1e1e1e;
       --warning-color: #ff9800;
     }
+    air-comfort-card-editor {
+      display: block;
+      padding: 12px 16px 16px;
+      --primary-text-color: #ffffff;
+      --secondary-text-color: rgba(255, 255, 255, 0.5);
+      --divider-color: rgba(255, 255, 255, 0.12);
+      --card-background-color: #2a2a2a;
+      --ha-card-background: #2a2a2a;
+    }
   </style>
 </head>
 <body>
@@ -124,6 +123,10 @@
 
   <div class="layout">
     <div class="cards-grid">
+      <div class="card-demo large">
+        <p class="demo-label">Wide (full-width)</p>
+        <air-comfort-card id="card-wide"></air-comfort-card>
+      </div>
       <div class="card-demo small">
         <p class="demo-label">Compact (1-2 columns)</p>
         <air-comfort-card id="card-compact"></air-comfort-card>
@@ -132,148 +135,44 @@
         <p class="demo-label">Standard (2-3 columns)</p>
         <air-comfort-card id="card-standard"></air-comfort-card>
       </div>
-      <div class="card-demo large">
-        <p class="demo-label">Wide (full-width)</p>
-        <air-comfort-card id="card-wide"></air-comfort-card>
-      </div>
     </div>
 
-    <div class="controls">
-      <div class="control">
-        <label>Temperature: <strong id="temp-value">22</strong>°C</label>
-        <input type="range" id="temperature" min="10" max="35" value="22" step="0.1">
-      </div>
-      <div class="control">
-        <label>Humidity: <strong id="humidity-value">50</strong>%</label>
-        <input type="range" id="humidity" min="10" max="90" value="50" step="0.1">
-      </div>
-      <div class="control">
-        <label>CO₂: <strong id="co2-value">450</strong> ppm</label>
-        <input type="range" id="co2" min="300" max="2500" value="450" step="1">
-      </div>
-      <div class="control">
-        <label>NO₂: <strong id="no2-value">30</strong></label>
-        <input type="range" id="no2" min="0" max="500" value="30" step="1">
-      </div>
-      <div class="control">
-        <label>PM 2.5: <strong id="pm25-value">10</strong> µg/m³</label>
-        <input type="range" id="pm25" min="0" max="200" value="10" step="0.1">
-      </div>
-      <div class="control">
-        <label>PM 10: <strong id="pm10-value">20</strong> µg/m³</label>
-        <input type="range" id="pm10" min="0" max="300" value="20" step="0.1">
-      </div>
-      <div class="control">
-        <label>VOC: <strong id="voc-value">100</strong></label>
-        <input type="range" id="voc" min="0" max="600" value="100" step="1">
-      </div>
-      <div class="control">
-        <label>Card Options</label>
-        <div class="checkboxes">
-          <label class="checkbox-option">
-            <input type="checkbox" data-setting="show_temperature_graph" checked>
-            <span>Show Temperature Graph</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" data-setting="show_humidity_graph" checked>
-            <span>Show Humidity Graph</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" data-setting="show_co2_graph" checked>
-            <span>Show CO₂ Graph</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" data-setting="show_no2_graph" checked>
-            <span>Show NO₂ Graph</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" data-setting="show_pm25_graph" checked>
-            <span>Show PM 2.5 Graph</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" data-setting="show_pm10_graph" checked>
-            <span>Show PM 10 Graph</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" data-setting="show_voc_graph" checked>
-            <span>Show VOC Graph</span>
-          </label>
+    <div class="sidebar">
+      <div class="controls">
+        <p class="section-label">Sensor Values</p>
+        <div class="control">
+          <label>Temperature: <strong id="temp-value">22</strong>°C</label>
+          <input type="range" id="temperature" min="10" max="35" value="22" step="0.1">
+        </div>
+        <div class="control">
+          <label>Humidity: <strong id="humidity-value">50</strong>%</label>
+          <input type="range" id="humidity" min="10" max="90" value="50" step="0.1">
+        </div>
+        <div class="control">
+          <label>CO₂: <strong id="co2-value">450</strong> ppm</label>
+          <input type="range" id="co2" min="300" max="2500" value="450" step="1">
+        </div>
+        <div class="control">
+          <label>NO₂: <strong id="no2-value">30</strong></label>
+          <input type="range" id="no2" min="0" max="500" value="30" step="1">
+        </div>
+        <div class="control">
+          <label>PM 2.5: <strong id="pm25-value">10</strong> µg/m³</label>
+          <input type="range" id="pm25" min="0" max="200" value="10" step="0.1">
+        </div>
+        <div class="control">
+          <label>PM 10: <strong id="pm10-value">20</strong> µg/m³</label>
+          <input type="range" id="pm10" min="0" max="300" value="20" step="0.1">
+        </div>
+        <div class="control">
+          <label>VOC: <strong id="voc-value">100</strong></label>
+          <input type="range" id="voc" min="0" max="600" value="100" step="1">
         </div>
       </div>
-      <div class="control">
-        <label>Comfort Ranges</label>
-        <div class="range-row">
-          <span class="range-label">Temperature (°C):</span>
-          <input type="number" data-setting="temp_min" value="20" step="0.5" style="width:70px">
-          <span>–</span>
-          <input type="number" data-setting="temp_max" value="24" step="0.5" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">Humidity (%):</span>
-          <input type="number" data-setting="humidity_min" value="40" step="1" style="width:70px">
-          <span>–</span>
-          <input type="number" data-setting="humidity_max" value="60" step="1" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">CO₂ Good (ppm):</span>
-          <input type="number" data-setting="co2_good" value="800" step="50" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">CO₂ Stuffy (ppm):</span>
-          <input type="number" data-setting="co2_warning" value="1200" step="50" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">CO₂ Poor (ppm):</span>
-          <input type="number" data-setting="co2_poor" value="1500" step="50" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">NO₂ Good:</span>
-          <input type="number" data-setting="no2_good" value="50" step="10" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">NO₂ Warning:</span>
-          <input type="number" data-setting="no2_warning" value="150" step="10" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">NO₂ Poor:</span>
-          <input type="number" data-setting="no2_poor" value="250" step="10" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">PM 2.5 Good (µg/m³):</span>
-          <input type="number" data-setting="pm25_good" value="15" step="5" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">PM 2.5 Warning (µg/m³):</span>
-          <input type="number" data-setting="pm25_warning" value="35" step="5" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">PM 2.5 Poor (µg/m³):</span>
-          <input type="number" data-setting="pm25_poor" value="75" step="5" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">PM 10 Good (µg/m³):</span>
-          <input type="number" data-setting="pm10_good" value="45" step="5" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">PM 10 Warning (µg/m³):</span>
-          <input type="number" data-setting="pm10_warning" value="100" step="10" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">PM 10 Poor (µg/m³):</span>
-          <input type="number" data-setting="pm10_poor" value="150" step="10" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">VOC Good:</span>
-          <input type="number" data-setting="voc_good" value="150" step="10" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">VOC Warning:</span>
-          <input type="number" data-setting="voc_warning" value="250" step="10" style="width:70px">
-        </div>
-        <div class="range-row">
-          <span class="range-label">VOC Poor:</span>
-          <input type="number" data-setting="voc_poor" value="400" step="10" style="width:70px">
-        </div>
+
+      <div class="editor-container">
+        <p class="section-label">Card Editor</p>
+        <air-comfort-card-editor id="card-editor"></air-comfort-card-editor>
       </div>
     </div>
   </div>
@@ -282,10 +181,12 @@
     import './dist/air-comfort-card.js';
 
     const cards = [
-      { element: document.getElementById('card-compact'), name: 'Compact Slot' },
-      { element: document.getElementById('card-standard'), name: 'Standard Slot' },
-      { element: document.getElementById('card-wide'), name: 'Wide Slot' }
+      document.getElementById('card-compact'),
+      document.getElementById('card-standard'),
+      document.getElementById('card-wide'),
     ];
+    const editor = document.getElementById('card-editor');
+
     const tempSlider = document.getElementById('temperature');
     const humiditySlider = document.getElementById('humidity');
     const co2Slider = document.getElementById('co2');
@@ -300,6 +201,7 @@
     const pm25Value = document.getElementById('pm25-value');
     const pm10Value = document.getElementById('pm10-value');
     const vocValue = document.getElementById('voc-value');
+
     let latestHistoryResponse = [];
     let temperatureEntityId = 'sensor.temperature';
     let humidityEntityId = 'sensor.humidity';
@@ -308,6 +210,43 @@
     let pm25EntityId = 'sensor.pm25';
     let pm10EntityId = 'sensor.pm10';
     let vocEntityId = 'sensor.voc';
+
+    let config = {
+      type: 'custom:air-comfort-card',
+      temperature_entity: temperatureEntityId,
+      humidity_entity: humidityEntityId,
+      co2_entity: co2EntityId,
+      no2_entity: no2EntityId,
+      pm25_entity: pm25EntityId,
+      pm10_entity: pm10EntityId,
+      voc_entity: vocEntityId,
+      show_temperature_graph: true,
+      show_humidity_graph: true,
+      show_co2_graph: true,
+      show_no2_graph: true,
+      show_pm25_graph: true,
+      show_pm10_graph: true,
+      show_voc_graph: true,
+      temp_min: 20,
+      temp_max: 24,
+      humidity_min: 40,
+      humidity_max: 60,
+      co2_good: 800,
+      co2_warning: 1200,
+      co2_poor: 1500,
+      no2_good: 50,
+      no2_warning: 150,
+      no2_poor: 250,
+      pm25_good: 15,
+      pm25_warning: 35,
+      pm25_poor: 75,
+      pm10_good: 45,
+      pm10_warning: 100,
+      pm10_poor: 150,
+      voc_good: 150,
+      voc_warning: 250,
+      voc_poor: 400,
+    };
 
     function createHass(temperature, humidity, co2, no2, pm25, pm10, voc) {
       return {
@@ -346,56 +285,6 @@
       };
     }
 
-    const settings = {
-      show_temperature_graph: true,
-      show_humidity_graph: true,
-      show_co2_graph: true,
-      show_no2_graph: true,
-      show_pm25_graph: true,
-      show_pm10_graph: true,
-      show_voc_graph: true,
-      temp_min: 20,
-      temp_max: 24,
-      humidity_min: 40,
-      humidity_max: 60,
-      co2_good: 800,
-      co2_warning: 1200,
-      co2_poor: 1500,
-      no2_good: 50,
-      no2_warning: 150,
-      no2_poor: 250,
-      pm25_good: 15,
-      pm25_warning: 35,
-      pm25_poor: 75,
-      pm10_good: 45,
-      pm10_warning: 100,
-      pm10_poor: 150,
-      voc_good: 150,
-      voc_warning: 250,
-      voc_poor: 400
-    };
-
-    function applyConfig() {
-      cards.forEach(({ element, name }) => {
-        if (!element) {
-          return;
-        }
-        element.setConfig({
-          type: 'custom:air-comfort-card',
-          temperature_entity: temperatureEntityId,
-          humidity_entity: humidityEntityId,
-          co2_entity: co2EntityId,
-          no2_entity: no2EntityId,
-          pm25_entity: pm25EntityId,
-          pm10_entity: pm10EntityId,
-          voc_entity: vocEntityId,
-          name,
-          ...settings
-        });
-      });
-      update();
-    }
-
     function update() {
       const temp = parseFloat(tempSlider.value);
       const humidity = parseFloat(humiditySlider.value);
@@ -411,14 +300,39 @@
       pm25Value.textContent = pm25.toFixed(1);
       pm10Value.textContent = pm10.toFixed(1);
       vocValue.textContent = voc.toFixed(0);
-      cards.forEach(({ element }) => {
+      const hass = createHass(temp, humidity, co2, no2, pm25, pm10, voc);
+      cards.forEach(element => {
         if (element) {
-          element.hass = createHass(temp, humidity, co2, no2, pm25, pm10, voc);
+          element.hass = hass;
           element.lastHistoryFetch = 0;
-          element.fetchHistory?.(); // Pull mock history so charts render in the playground
+          element.fetchHistory?.();
         }
       });
+      editor.hass = hass;
     }
+
+    function applyConfig() {
+      // Sync entity IDs from config so the mock hass states use the right keys
+      if (config.temperature_entity) temperatureEntityId = config.temperature_entity;
+      if (config.humidity_entity) humidityEntityId = config.humidity_entity;
+      if (config.co2_entity) co2EntityId = config.co2_entity;
+      if (config.no2_entity) no2EntityId = config.no2_entity;
+      if (config.pm25_entity) pm25EntityId = config.pm25_entity;
+      if (config.pm10_entity) pm10EntityId = config.pm10_entity;
+      if (config.voc_entity) vocEntityId = config.voc_entity;
+
+      cards.forEach(element => {
+        if (element) element.setConfig(config);
+      });
+      editor.setConfig(config);
+      update();
+    }
+
+    // When the editor fires config-changed, push the new config to all cards
+    editor.addEventListener('config-changed', (e) => {
+      config = e.detail.config;
+      applyConfig();
+    });
 
     tempSlider.addEventListener('input', update);
     humiditySlider.addEventListener('input', update);
@@ -427,38 +341,6 @@
     pm25Slider.addEventListener('input', update);
     pm10Slider.addEventListener('input', update);
     vocSlider.addEventListener('input', update);
-    document
-      .querySelectorAll('input[data-setting][type="checkbox"]')
-      .forEach(input => {
-        input.addEventListener('change', event => {
-          const target = event.currentTarget;
-          if (!(target instanceof HTMLInputElement)) {
-            return;
-          }
-          const key = target.dataset.setting;
-          if (!key) {
-            return;
-          }
-          settings[key] = target.checked;
-          applyConfig();
-        });
-      });
-    document
-      .querySelectorAll('input[data-setting][type="number"]')
-      .forEach(input => {
-        input.addEventListener('input', event => {
-          const target = event.currentTarget;
-          if (!(target instanceof HTMLInputElement)) {
-            return;
-          }
-          const key = target.dataset.setting;
-          if (!key) {
-            return;
-          }
-          settings[key] = parseFloat(target.value);
-          applyConfig();
-        });
-      });
 
     function getLatestHistoryValue(series) {
       if (!Array.isArray(series)) {
@@ -508,24 +390,31 @@
         const [temperatureHistory = [], humidityHistory = [], co2History = [], no2History = [], pm25History = [], pm10History = [], vocHistory = []] = data;
         if (temperatureHistory[0]?.entity_id) {
           temperatureEntityId = temperatureHistory[0].entity_id;
+          config.temperature_entity = temperatureEntityId;
         }
         if (humidityHistory[0]?.entity_id) {
           humidityEntityId = humidityHistory[0].entity_id;
+          config.humidity_entity = humidityEntityId;
         }
         if (co2History[0]?.entity_id) {
           co2EntityId = co2History[0].entity_id;
+          config.co2_entity = co2EntityId;
         }
         if (no2History[0]?.entity_id) {
           no2EntityId = no2History[0].entity_id;
+          config.no2_entity = no2EntityId;
         }
         if (pm25History[0]?.entity_id) {
           pm25EntityId = pm25History[0].entity_id;
+          config.pm25_entity = pm25EntityId;
         }
         if (pm10History[0]?.entity_id) {
           pm10EntityId = pm10History[0].entity_id;
+          config.pm10_entity = pm10EntityId;
         }
         if (vocHistory[0]?.entity_id) {
           vocEntityId = vocHistory[0].entity_id;
+          config.voc_entity = vocEntityId;
         }
         applyHistoryDefaults(temperatureHistory, humidityHistory, co2History);
       } catch (error) {
