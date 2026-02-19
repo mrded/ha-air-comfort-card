@@ -21,21 +21,32 @@
     }
     .layout {
       display: flex;
-      flex-direction: column;
       gap: 24px;
+      align-items: flex-start;
     }
     .cards-grid {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
+      flex: 1 1 0;
+      min-width: 0;
+      align-content: flex-start;
     }
     .card-demo {
       background: #1a1a1a;
       padding: 16px;
       border-radius: 12px;
-      flex: 1 1 220px;
-      max-width: 420px;
+      flex: 0 0 auto;
       border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .card-demo.small {
+      width: 240px;
+    }
+    .card-demo.medium {
+      width: 320px;
+    }
+    .card-demo.large {
+      width: 100%;
     }
     .card-demo .demo-label {
       margin: 0 0 12px;
@@ -44,26 +55,16 @@
       letter-spacing: 0.08em;
       color: rgba(255, 255, 255, 0.7);
     }
-    .card-demo.small {
-      max-width: 240px;
-    }
-    .card-demo.medium {
-      max-width: 320px;
-    }
-    .card-demo.large {
-      max-width: 420px;
-    }
-    .bottom-section {
+    .sidebar {
       display: flex;
+      flex-direction: column;
       gap: 24px;
-      align-items: flex-start;
-      flex-wrap: wrap;
+      flex: 0 0 300px;
     }
     .controls {
       background: #222;
       padding: 20px;
       border-radius: 12px;
-      flex: 0 0 280px;
     }
     .section-label {
       margin: 0 0 16px;
@@ -123,6 +124,10 @@
 
   <div class="layout">
     <div class="cards-grid">
+      <div class="card-demo large">
+        <p class="demo-label">Wide (full-width)</p>
+        <air-comfort-card id="card-wide"></air-comfort-card>
+      </div>
       <div class="card-demo small">
         <p class="demo-label">Compact (1-2 columns)</p>
         <air-comfort-card id="card-compact"></air-comfort-card>
@@ -131,13 +136,9 @@
         <p class="demo-label">Standard (2-3 columns)</p>
         <air-comfort-card id="card-standard"></air-comfort-card>
       </div>
-      <div class="card-demo large">
-        <p class="demo-label">Wide (full-width)</p>
-        <air-comfort-card id="card-wide"></air-comfort-card>
-      </div>
     </div>
 
-    <div class="bottom-section">
+    <div class="sidebar">
       <div class="controls">
         <p class="section-label">Sensor Values</p>
         <div class="control">
