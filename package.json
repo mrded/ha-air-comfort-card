@@ -8,6 +8,7 @@
     "watch": "rollup -c -w",
     "lint": "eslint src --ext .ts",
     "start:dev": "bun run build && ln -sfn ../dist public/dist && bunx --bun serve public",
+    "test:unit": "bun test src/",
     "test": "bunx playwright test"
   },
   "keywords": [
