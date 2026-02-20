@@ -5,3 +5,5 @@ dist/
 .serena/
 demo.html
 demo-editor.html
+test-results/
+playwright-report/

@@ -7,7 +7,8 @@
     "build": "rollup -c",
     "watch": "rollup -c -w",
     "lint": "eslint src --ext .ts",
-    "start:dev": "bun run build && ln -sfn ../dist public/dist && bunx --bun serve public"
+    "start:dev": "bun run build && ln -sfn ../dist public/dist && bunx --bun serve public",
+    "test": "bunx playwright test"
   },
   "keywords": [
     "home-assistant",
@@ -26,6 +27,7 @@
     "url": "https://github.com/mrded/ha-air-comfort-card.git"
   },
   "devDependencies": {
+    "@playwright/test": "1.58.2",
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-terser": "^0.4.0",
     "@rollup/plugin-typescript": "^11.0.0",
