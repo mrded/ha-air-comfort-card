@@ -9,7 +9,7 @@ import {
 import "chartjs-adapter-date-fns";
 import { CardConfig, HomeAssistant, HistoryState, LovelaceCard } from "./types";
 import { cardStyles } from "./styles";
-import { calculateComfortZone } from "./comfort-zone";
+import { calculateComfortZone, celsiusToFahrenheit, fahrenheitToCelsius } from "./comfort-zone";
 import "./air-comfort-card-editor";
 
 Chart.register(...registerables);
@@ -56,6 +56,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       pm25_entity: "",
       pm10_entity: "",
       voc_entity: "",
+      temperature_unit: "C",
       show_temperature_graph: true,
       show_humidity_graph: true,
       show_co2_graph: true,
@@ -63,8 +64,10 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       show_pm25_graph: true,
       show_pm10_graph: true,
       show_voc_graph: true,
-      temp_min: 20,
-      temp_max: 24,
+      temp_c_min: 20,
+      temp_c_max: 24,
+      temp_f_min: 68,
+      temp_f_max: 75,
       humidity_min: 40,
       humidity_max: 60,
       co2_good: 800,
@@ -97,6 +100,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       throw new Error("You need to define a humidity_entity");
     }
     this.config = {
+      temperature_unit: "C",
       show_temperature_graph: true,
       show_humidity_graph: true,
       show_co2_graph: true,
@@ -104,8 +108,10 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       show_pm25_graph: true,
       show_pm10_graph: true,
       show_voc_graph: true,
-      temp_min: 20,
-      temp_max: 24,
+      temp_c_min: 20,
+      temp_c_max: 24,
+      temp_f_min: 68,
+      temp_f_max: 75,
       humidity_min: 40,
       humidity_max: 60,
       co2_good: 800,
@@ -511,19 +517,35 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 
     // Update or create temperature chart
     if (tempCanvas && this.temperatureHistory.length > 0) {
+      // Get the appropriate temperature thresholds based on the selected unit
+      const preferredUnit = this.config?.temperature_unit || "C";
+      const sensorIsF = tempUnit === "°F" || tempUnit === "F";
+      const userWantsF = preferredUnit === "F";
+
+      const convertedTempHistory = (userWantsF && !sensorIsF)
+        ? this.temperatureHistory.map(p => ({ ...p, value: celsiusToFahrenheit(p.value) }))
+        : (!userWantsF && sensorIsF)
+        ? this.temperatureHistory.map(p => ({ ...p, value: fahrenheitToCelsius(p.value) }))
+        : this.temperatureHistory;
+
+      const displayTempUnit = userWantsF ? "°F" : "°C";
+
+      const tempMin = userWantsF ? this.config?.temp_f_min : this.config?.temp_c_min;
+      const tempMax = userWantsF ? this.config?.temp_f_max : this.config?.temp_c_max;
+
       const tempThresholds = [
-        this.config?.temp_min != null
-          ? { value: this.config.temp_min, color: "rgba(100,150,255,0.5)", label: "Cold" }
+        tempMin != null
+          ? { value: tempMin, color: "rgba(100,150,255,0.5)", label: "Cold" }
           : null,
-        this.config?.temp_max != null
-          ? { value: this.config.temp_max, color: "rgba(255,100,80,0.5)", label: "Hot" }
+        tempMax != null
+          ? { value: tempMax, color: "rgba(255,100,80,0.5)", label: "Hot" }
           : null
       ].filter((t): t is { value: number; color: string; label: string } => t != null);
       const tempConfig = this.getChartConfig(
-        this.temperatureHistory,
+        convertedTempHistory,
         "Temperature",
         "#ff6b6b",
-        tempUnit,
+        displayTempUnit,
         tempThresholds
       );
       if (this.temperatureChart) {
@@ -755,14 +777,48 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       `;
     }
 
+    // Convert temperature to Celsius for comfort zone calculation
+    // We detect the sensor's unit from its unit_of_measurement attribute
+    const sensorIsF = tempUnit === "°F" || tempUnit === "F";
+    const temperatureInCelsius = sensorIsF ? fahrenheitToCelsius(temperature) : temperature;
+
+    // Determine display values based on user preference
+    const preferredUnit = this.config.temperature_unit || "C";
+    let displayTemperature: number;
+    let displayUnit: string;
+
+    // Calculate display temperature based on user preference and sensor unit
+    if (preferredUnit === "F") {
+      displayTemperature = sensorIsF ? temperature : celsiusToFahrenheit(temperature);
+      displayUnit = "°F";
+    } else {
+      displayTemperature = sensorIsF ? fahrenheitToCelsius(temperature) : temperature;
+      displayUnit = "°C";
+    }
+
+    // Select the appropriate temperature range based on the preferred unit
+    // If using Fahrenheit ranges, convert them to Celsius for the comfort zone calculation
+    let tempMinInCelsius: number;
+    let tempMaxInCelsius: number;
+    
+    if (preferredUnit === "F") {
+      // Use Fahrenheit ranges and convert to Celsius for calculation
+      tempMinInCelsius = fahrenheitToCelsius(this.config.temp_f_min ?? 68);
+      tempMaxInCelsius = fahrenheitToCelsius(this.config.temp_f_max ?? 75);
+    } else {
+      // Use Celsius ranges directly
+      tempMinInCelsius = this.config.temp_c_min ?? 20;
+      tempMaxInCelsius = this.config.temp_c_max ?? 24;
+    }
+
     const {
       angle,
       radialDistance,
       isInComfortZone,
       statusText
-    } = calculateComfortZone(temperature, humidity, {
-      tempMin: this.config.temp_min,
-      tempMax: this.config.temp_max,
+    } = calculateComfortZone(temperatureInCelsius, humidity, {
+      tempMin: tempMinInCelsius,
+      tempMax: tempMaxInCelsius,
       humidityMin: this.config.humidity_min,
       humidityMax: this.config.humidity_max
     });
@@ -825,8 +881,8 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
                     <span class="warning-icon">⚠</span>
                   `
                 : ""}
-              ${temperature.toFixed(1)}<span class="reading-unit"
-                >${tempUnit}</span
+              ${displayTemperature.toFixed(1)}<span class="reading-unit"
+                >${displayUnit}</span
               >
             </div>
           </div>

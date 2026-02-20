@@ -141,7 +141,12 @@
       <div class="controls">
         <p class="section-label">Sensor Values</p>
         <div class="control">
-          <label>Temperature: <strong id="temp-value">22</strong>°C</label>
+          <label>Temperature: <strong id="temp-value">22</strong> <span id="temp-unit-label">°C</span>
+            <select id="sensor-temp-unit" style="margin-left:8px;background:#333;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 4px;font-size:12px;">
+              <option value="°C">°C</option>
+              <option value="°F">°F</option>
+            </select>
+          </label>
           <input type="range" id="temperature" min="10" max="35" value="22" step="0.1">
         </div>
         <div class="control">
@@ -202,6 +207,11 @@
     const pm10Value = document.getElementById('pm10-value');
     const vocValue = document.getElementById('voc-value');
 
+    let sensorTempUnit = '°C';
+
+    function celsiusToFahrenheit(c) { return (c * 9 / 5) + 32; }
+    function fahrenheitToCelsius(f) { return (f - 32) * 5 / 9; }
+
     let latestHistoryResponse = [];
     let temperatureEntityId = 'sensor.temperature';
     let humidityEntityId = 'sensor.humidity';
@@ -253,7 +263,7 @@
         states: {
           [temperatureEntityId]: {
             state: String(temperature),
-            attributes: { unit_of_measurement: '°C' }
+            attributes: { unit_of_measurement: sensorTempUnit }
           },
           [humidityEntityId]: {
             state: String(humidity),
@@ -332,6 +342,28 @@
     editor.addEventListener('config-changed', (e) => {
       config = e.detail.config;
       applyConfig();
+    });
+
+    const sensorUnitSelect = document.getElementById('sensor-temp-unit');
+    sensorUnitSelect.addEventListener('change', () => {
+      const newUnit = sensorUnitSelect.value;
+      const current = parseFloat(tempSlider.value);
+      if (newUnit === '°F' && sensorTempUnit === '°C') {
+        const converted = celsiusToFahrenheit(current);
+        tempSlider.min = '50';
+        tempSlider.max = '95';
+        tempSlider.step = '0.1';
+        tempSlider.value = converted.toFixed(1);
+      } else if (newUnit === '°C' && sensorTempUnit === '°F') {
+        const converted = fahrenheitToCelsius(current);
+        tempSlider.min = '10';
+        tempSlider.max = '35';
+        tempSlider.step = '0.1';
+        tempSlider.value = converted.toFixed(1);
+      }
+      sensorTempUnit = newUnit;
+      document.getElementById('temp-unit-label').textContent = newUnit;
+      update();
     });
 
     tempSlider.addEventListener('input', update);
