@@ -3,6 +3,7 @@ import {
   calculateComfortZone,
   celsiusToFahrenheit,
   fahrenheitToCelsius,
+  thermalStatusLabel,
 } from "./comfort-zone";
 
 describe("calculateComfortZone", () => {
@@ -31,10 +32,10 @@ describe("calculateComfortZone", () => {
       expect(result.humidityDeviation).toBe(0);
     });
 
-    it("returns WARM when temperature is above range", () => {
+    it("returns HOT when temperature is above range", () => {
       const result = calculateComfortZone(28, 50);
       expect(result.isInComfortZone).toBe(false);
-      expect(result.statusText).toBe("WARM");
+      expect(result.statusText).toBe("HOT");
       expect(result.tempDeviation).toBe(4);
       expect(result.humidityDeviation).toBe(0);
     });
@@ -69,14 +70,14 @@ describe("calculateComfortZone", () => {
       expect(result.statusText).toBe("COLD & HUMID");
     });
 
-    it("returns WARM & DRY when both are out of range in that direction", () => {
+    it("returns HOT & DRY when both are out of range in that direction", () => {
       const result = calculateComfortZone(30, 20);
-      expect(result.statusText).toBe("WARM & DRY");
+      expect(result.statusText).toBe("HOT & DRY");
     });
 
-    it("returns WARM & HUMID when both are out of range in that direction", () => {
+    it("returns HOT & HUMID when both are out of range in that direction", () => {
       const result = calculateComfortZone(30, 70);
-      expect(result.statusText).toBe("WARM & HUMID");
+      expect(result.statusText).toBe("HOT & HUMID");
     });
   });
 
@@ -146,7 +147,7 @@ describe("calculateComfortZone", () => {
     it("detects deviation outside custom ranges", () => {
       const result = calculateComfortZone(25, 50, { tempMin: 16, tempMax: 20 });
       expect(result.isInComfortZone).toBe(false);
-      expect(result.statusText).toBe("WARM");
+      expect(result.statusText).toBe("HOT");
       expect(result.tempDeviation).toBe(5);
     });
   });
@@ -189,5 +190,46 @@ describe("fahrenheitToCelsius", () => {
 
   it("is the inverse of celsiusToFahrenheit", () => {
     expect(fahrenheitToCelsius(celsiusToFahrenheit(22))).toBeCloseTo(22, 10);
+  });
+});
+
+describe("thermalStatusLabel", () => {
+  it("maps PLEASANT to Comfortable", () => {
+    expect(thermalStatusLabel("PLEASANT")).toBe("Comfortable");
+  });
+
+  it("maps single-direction statuses to title-case", () => {
+    expect(thermalStatusLabel("COLD")).toBe("Cold");
+    expect(thermalStatusLabel("HOT")).toBe("Hot");
+    expect(thermalStatusLabel("DRY")).toBe("Dry");
+    expect(thermalStatusLabel("HUMID")).toBe("Humid");
+  });
+
+  it("maps combined statuses preserving the ampersand in sentence case", () => {
+    expect(thermalStatusLabel("COLD & DRY")).toBe("Cold & dry");
+    expect(thermalStatusLabel("COLD & HUMID")).toBe("Cold & humid");
+    expect(thermalStatusLabel("HOT & DRY")).toBe("Hot & dry");
+    expect(thermalStatusLabel("HOT & HUMID")).toBe("Hot & humid");
+  });
+
+  it("falls back to the original text for unknown status values", () => {
+    expect(thermalStatusLabel("UNKNOWN")).toBe("UNKNOWN");
+  });
+
+  it("covers every status text produced by calculateComfortZone", () => {
+    const statuses = [
+      calculateComfortZone(22, 50),  // PLEASANT
+      calculateComfortZone(15, 50),  // COLD
+      calculateComfortZone(28, 50),  // HOT
+      calculateComfortZone(22, 30),  // DRY
+      calculateComfortZone(22, 70),  // HUMID
+      calculateComfortZone(10, 20),  // COLD & DRY
+      calculateComfortZone(10, 80),  // COLD & HUMID
+      calculateComfortZone(30, 20),  // HOT & DRY
+      calculateComfortZone(30, 70),  // HOT & HUMID
+    ];
+    for (const { statusText } of statuses) {
+      expect(thermalStatusLabel(statusText)).not.toBe(statusText);
+    }
   });
 });
