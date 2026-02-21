@@ -21,6 +21,16 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
   // Wait until the card has rendered its first status badge.
   await expect(card(page).locator('.status-badge')).toBeVisible();
+  // Reset all sliders to known-good defaults. mock.json loads a CO2 history
+  // whose latest value (1242 ppm) exceeds the warning threshold, which would
+  // otherwise bleed "Poor air" into every test that doesn't set CO2 explicitly.
+  await setSlider(page, 'temperature', '22');
+  await setSlider(page, 'humidity', '50');
+  await setSlider(page, 'co2', '450');
+  await setSlider(page, 'no2', '30');
+  await setSlider(page, 'pm25', '10');
+  await setSlider(page, 'pm10', '20');
+  await setSlider(page, 'voc', '100');
 });
 
 // ---------------------------------------------------------------------------
