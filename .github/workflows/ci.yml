@@ -12,4 +12,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run lint
+      - run: bun run test:unit
       - run: bun run build
+      - run: bunx playwright install chromium --with-deps
+      - run: bun run test:integration
