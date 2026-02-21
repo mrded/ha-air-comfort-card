@@ -449,6 +449,7 @@ private getSensorDefs() {
         id: "temperature", canvasId: "temp-chart",
         label: "Temperature", color: "#ff6b6b",
         unit: displayTempUnit, history: tempHistory,
+        show: config.show_temperature_graph !== false,
         thresholds: collect(
           thresh(tempMin, "rgba(100,150,255,0.5)", "Cold"),
           thresh(tempMax, "rgba(255,100,80,0.5)", "Hot"),
@@ -458,6 +459,7 @@ private getSensorDefs() {
         id: "humidity", canvasId: "humidity-chart",
         label: "Humidity", color: "#4dabf7",
         unit: entityUnit("humidity_entity", "%"), history: this.humidityHistory,
+        show: config.show_humidity_graph !== false,
         thresholds: collect(
           thresh(config.humidity_min, "rgba(255,180,50,0.5)", "Dry"),
           thresh(config.humidity_max, "rgba(80,160,255,0.5)", "Wet"),
@@ -467,6 +469,7 @@ private getSensorDefs() {
         id: "co2", canvasId: "co2-chart",
         label: "CO₂", color: "#a9e34b",
         unit: entityUnit("co2_entity", "ppm"), history: this.co2History,
+        show: config.show_co2_graph !== false && !!config.co2_entity,
         thresholds: collect(
           thresh(config.co2_good, "rgba(100,220,100,0.5)", "Good"),
           thresh(config.co2_warning, "rgba(255,180,50,0.5)", "Stuffy"),
@@ -477,6 +480,7 @@ private getSensorDefs() {
         id: "no2", canvasId: "no2-chart",
         label: "NO₂", color: "#ffa94d",
         unit: entityUnit("no2_entity", ""), history: this.no2History,
+        show: config.show_no2_graph !== false && !!config.no2_entity,
         thresholds: collect(
           thresh(config.no2_good, "rgba(100,220,100,0.5)", "Good"),
           thresh(config.no2_warning, "rgba(255,180,50,0.5)", "Warning"),
@@ -487,6 +491,7 @@ private getSensorDefs() {
         id: "pm25", canvasId: "pm25-chart",
         label: "PM 2.5", color: "#da77f2",
         unit: entityUnit("pm25_entity", "µg/m³"), history: this.pm25History,
+        show: config.show_pm25_graph !== false && !!config.pm25_entity,
         thresholds: collect(
           thresh(config.pm25_good, "rgba(100,220,100,0.5)", "Good"),
           thresh(config.pm25_warning, "rgba(255,180,50,0.5)", "Warning"),
@@ -497,6 +502,7 @@ private getSensorDefs() {
         id: "pm10", canvasId: "pm10-chart",
         label: "PM 10", color: "#74c0fc",
         unit: entityUnit("pm10_entity", "µg/m³"), history: this.pm10History,
+        show: config.show_pm10_graph !== false && !!config.pm10_entity,
         thresholds: collect(
           thresh(config.pm10_good, "rgba(100,220,100,0.5)", "Good"),
           thresh(config.pm10_warning, "rgba(255,180,50,0.5)", "Warning"),
@@ -507,6 +513,7 @@ private getSensorDefs() {
         id: "voc", canvasId: "voc-chart",
         label: "VOC", color: "#20c997",
         unit: entityUnit("voc_entity", ""), history: this.vocHistory,
+        show: config.show_voc_graph !== false && !!config.voc_entity,
         thresholds: collect(
           thresh(config.voc_good, "rgba(100,220,100,0.5)", "Good"),
           thresh(config.voc_warning, "rgba(255,180,50,0.5)", "Warning"),
@@ -731,19 +738,9 @@ private getSensorDefs() {
   }
 
   private renderCharts() {
-    if (!this.config) {
-      return null;
-    }
-    const showTemperatureGraph = this.config.show_temperature_graph !== false;
-    const showHumidityGraph = this.config.show_humidity_graph !== false;
-    const showCo2Graph = this.config.show_co2_graph !== false && !!this.config.co2_entity;
-    const showNo2Graph = this.config.show_no2_graph !== false && !!this.config.no2_entity;
-    const showPm25Graph = this.config.show_pm25_graph !== false && !!this.config.pm25_entity;
-    const showPm10Graph = this.config.show_pm10_graph !== false && !!this.config.pm10_entity;
-    const showVocGraph = this.config.show_voc_graph !== false && !!this.config.voc_entity;
-    if (!showTemperatureGraph && !showHumidityGraph && !showCo2Graph && !showNo2Graph && !showPm25Graph && !showPm10Graph && !showVocGraph) {
-      return null;
-    }
+    const visibleDefs = this.getSensorDefs().filter(d => d.show);
+    if (visibleDefs.length === 0) return null;
+
     return html`
       <div class="history-section">
         <div
@@ -777,76 +774,14 @@ private getSensorDefs() {
         ${this.historyExpanded
           ? html`
               <div class="charts-container">
-                ${showTemperatureGraph
-                  ? html`
-                      <div class="chart-wrapper">
-                        <div class="chart-label">Temperature (24h)</div>
-                        <div class="chart-canvas-container">
-                          <canvas id="temp-chart"></canvas>
-                        </div>
-                      </div>
-                    `
-                  : ""}
-                ${showHumidityGraph
-                  ? html`
-                      <div class="chart-wrapper">
-                        <div class="chart-label">Humidity (24h)</div>
-                        <div class="chart-canvas-container">
-                          <canvas id="humidity-chart"></canvas>
-                        </div>
-                      </div>
-                    `
-                  : ""}
-                ${showCo2Graph
-                  ? html`
-                      <div class="chart-wrapper">
-                        <div class="chart-label">CO₂ (24h)</div>
-                        <div class="chart-canvas-container">
-                          <canvas id="co2-chart"></canvas>
-                        </div>
-                      </div>
-                    `
-                  : ""}
-                ${showNo2Graph
-                  ? html`
-                      <div class="chart-wrapper">
-                        <div class="chart-label">NO₂ (24h)</div>
-                        <div class="chart-canvas-container">
-                          <canvas id="no2-chart"></canvas>
-                        </div>
-                      </div>
-                    `
-                  : ""}
-                ${showPm25Graph
-                  ? html`
-                      <div class="chart-wrapper">
-                        <div class="chart-label">PM 2.5 (24h)</div>
-                        <div class="chart-canvas-container">
-                          <canvas id="pm25-chart"></canvas>
-                        </div>
-                      </div>
-                    `
-                  : ""}
-                ${showPm10Graph
-                  ? html`
-                      <div class="chart-wrapper">
-                        <div class="chart-label">PM 10 (24h)</div>
-                        <div class="chart-canvas-container">
-                          <canvas id="pm10-chart"></canvas>
-                        </div>
-                      </div>
-                    `
-                  : ""}
-                ${showVocGraph
-                  ? html`
-                      <div class="chart-wrapper">
-                        <div class="chart-label">VOC (24h)</div>
-                        <div class="chart-canvas-container">
-                          <canvas id="voc-chart"></canvas>
-                        </div>
-                      </div>
-                    `
-                  : ""}
+                ${visibleDefs.map(def => html`
+                  <div class="chart-wrapper">
+                    <div class="chart-label">${def.label} (24h)</div>
+                    <div class="chart-canvas-container">
+                      <canvas id="${def.canvasId}"></canvas>
+                    </div>
+                  </div>
+                `)}
               </div>
             `
           : ""}
