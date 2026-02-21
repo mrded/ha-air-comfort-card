@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { calculateComfortZone } from "./comfort-zone";
+import {
+  calculateComfortZone,
+  celsiusToFahrenheit,
+  fahrenheitToCelsius,
+} from "./comfort-zone";
 
 describe("calculateComfortZone", () => {
   describe("comfort zone detection", () => {
@@ -145,5 +149,45 @@ describe("calculateComfortZone", () => {
       expect(result.statusText).toBe("WARM");
       expect(result.tempDeviation).toBe(5);
     });
+  });
+});
+
+describe("celsiusToFahrenheit", () => {
+  it("converts freezing point", () => {
+    expect(celsiusToFahrenheit(0)).toBe(32);
+  });
+
+  it("converts boiling point", () => {
+    expect(celsiusToFahrenheit(100)).toBe(212);
+  });
+
+  it("converts body temperature", () => {
+    expect(celsiusToFahrenheit(37)).toBeCloseTo(98.6, 1);
+  });
+
+  it("converts the crossover point where both scales are equal", () => {
+    expect(celsiusToFahrenheit(-40)).toBe(-40);
+  });
+});
+
+describe("fahrenheitToCelsius", () => {
+  it("converts freezing point", () => {
+    expect(fahrenheitToCelsius(32)).toBe(0);
+  });
+
+  it("converts boiling point", () => {
+    expect(fahrenheitToCelsius(212)).toBe(100);
+  });
+
+  it("converts body temperature", () => {
+    expect(fahrenheitToCelsius(98.6)).toBeCloseTo(37, 1);
+  });
+
+  it("converts the crossover point where both scales are equal", () => {
+    expect(fahrenheitToCelsius(-40)).toBe(-40);
+  });
+
+  it("is the inverse of celsiusToFahrenheit", () => {
+    expect(fahrenheitToCelsius(celsiusToFahrenheit(22))).toBeCloseTo(22, 10);
   });
 });
