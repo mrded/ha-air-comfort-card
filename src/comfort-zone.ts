@@ -74,7 +74,8 @@ export function calculateComfortZone(
     const idealHumidity = (humidityMin + humidityMax) / 2;
     const tempOffset = temp - idealTemp;
     const humidityOffset = humidity - idealHumidity;
-    angle = Math.atan2(humidityOffset, tempOffset) * (180 / Math.PI);
+    // Use same direction mapping as outside-zone: warm=top(0°), humid=right(90°), cold=bottom(180°), dry=left(270°)
+    angle = Math.atan2(-tempOffset, humidityOffset) * (180 / Math.PI);
     angle = (angle + 90 + 360) % 360;
   } else {
     // Calculate angle based on actual deviations, not just direction

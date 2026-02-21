@@ -651,12 +651,23 @@ private getSensorDefs() {
     const innerRadius = this.dialSize * 0.2;
     const outerRadius = this.dialSize * 0.4;
     const MAX_RADIAL_DISTANCE_SCALE = 1.5;
-    const COMFORT_ZONE_VARIATION = 0.3;
+
+    // Continuous distance from comfort zone center (0=center, 1=at zone boundary, >1=outside)
+    // Uses Chebyshev (box) distance so the boundary is exactly 1.0 at all zone edges.
+    const tempMidC = (tempMinInCelsius + tempMaxInCelsius) / 2;
+    const humidityMidVal = ((this.config.humidity_min ?? 40) + (this.config.humidity_max ?? 60)) / 2;
+    const halfTempW = Math.max(0.5, (tempMaxInCelsius - tempMinInCelsius) / 2);
+    const halfHumW = Math.max(1, ((this.config.humidity_max ?? 60) - (this.config.humidity_min ?? 40)) / 2);
+    const tRel = (temperatureInCelsius - tempMidC) / halfTempW;
+    const hRel = (humidity - humidityMidVal) / halfHumW;
+    const boxDistance = Math.max(Math.abs(tRel), Math.abs(hRel));
 
     let actualRadius;
-    if (isInComfortZone) {
-      actualRadius = radialDistance * innerRadius * COMFORT_ZONE_VARIATION;
+    if (boxDistance <= 1) {
+      // Inside comfort zone: moves smoothly from center (0) to zone boundary (innerRadius)
+      actualRadius = boxDistance * innerRadius;
     } else {
+      // Outside comfort zone: continues from innerRadius outward
       actualRadius =
         innerRadius +
         (radialDistance * (outerRadius - innerRadius)) /
