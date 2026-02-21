@@ -34,13 +34,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
   @state() private historyExpanded = false;
 
   private resizeObserver?: ResizeObserver;
-  private temperatureChart?: Chart;
-  private humidityChart?: Chart;
-  private co2Chart?: Chart;
-  private no2Chart?: Chart;
-  private pm25Chart?: Chart;
-  private pm10Chart?: Chart;
-  private vocChart?: Chart;
+  private charts = new Map<string, Chart>();
   private historyFetchInterval?: number;
   private lastHistoryFetch = 0;
 
@@ -194,20 +188,10 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
   }
 
   private destroyCharts(): void {
-    this.temperatureChart?.destroy();
-    this.temperatureChart = undefined;
-    this.humidityChart?.destroy();
-    this.humidityChart = undefined;
-    this.co2Chart?.destroy();
-    this.co2Chart = undefined;
-    this.no2Chart?.destroy();
-    this.no2Chart = undefined;
-    this.pm25Chart?.destroy();
-    this.pm25Chart = undefined;
-    this.pm10Chart?.destroy();
-    this.pm10Chart = undefined;
-    this.vocChart?.destroy();
-    this.vocChart = undefined;
+    for (const chart of this.charts.values()) {
+      chart.destroy();
+    }
+    this.charts.clear();
   }
 
   private async fetchHistory(): Promise<void> {
@@ -432,292 +416,125 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     };
   }
 
-  private updateCharts(): void {
-    const tempCanvas = this.shadowRoot?.getElementById(
-      "temp-chart"
-    ) as HTMLCanvasElement | null;
-    const humidityCanvas = this.shadowRoot?.getElementById(
-      "humidity-chart"
-    ) as HTMLCanvasElement | null;
-    const co2Canvas = this.shadowRoot?.getElementById(
-      "co2-chart"
-    ) as HTMLCanvasElement | null;
-    const no2Canvas = this.shadowRoot?.getElementById(
-      "no2-chart"
-    ) as HTMLCanvasElement | null;
-    const pm25Canvas = this.shadowRoot?.getElementById(
-      "pm25-chart"
-    ) as HTMLCanvasElement | null;
-    const pm10Canvas = this.shadowRoot?.getElementById(
-      "pm10-chart"
-    ) as HTMLCanvasElement | null;
-    const vocCanvas = this.shadowRoot?.getElementById(
-      "voc-chart"
-    ) as HTMLCanvasElement | null;
+private getSensorDefs() {
+    const config = this.config;
+    if (!config) return [];
 
-    if (!tempCanvas && this.temperatureChart) {
-      this.temperatureChart.destroy();
-      this.temperatureChart = undefined;
-    }
-    if (!humidityCanvas && this.humidityChart) {
-      this.humidityChart.destroy();
-      this.humidityChart = undefined;
-    }
-    if (!co2Canvas && this.co2Chart) {
-      this.co2Chart.destroy();
-      this.co2Chart = undefined;
-    }
-    if (!no2Canvas && this.no2Chart) {
-      this.no2Chart.destroy();
-      this.no2Chart = undefined;
-    }
-    if (!pm25Canvas && this.pm25Chart) {
-      this.pm25Chart.destroy();
-      this.pm25Chart = undefined;
-    }
-    if (!pm10Canvas && this.pm10Chart) {
-      this.pm10Chart.destroy();
-      this.pm10Chart = undefined;
-    }
-    if (!vocCanvas && this.vocChart) {
-      this.vocChart.destroy();
-      this.vocChart = undefined;
-    }
+    type Threshold = { value: number; color: string; label: string };
+    const thresh = (value: number | undefined, color: string, label: string): Threshold | null =>
+      value != null ? { value, color, label } : null;
+    const collect = (...items: (Threshold | null)[]): Threshold[] =>
+      items.filter((t): t is Threshold => t !== null);
 
-    if (!tempCanvas && !humidityCanvas && !co2Canvas && !no2Canvas && !pm25Canvas && !pm10Canvas && !vocCanvas) {
-      return;
-    }
+    const entityUnit = (entityKey: keyof CardConfig, fallback: string): string => {
+      const id = config[entityKey] as string | undefined;
+      return (id && this.hass?.states[id]?.attributes.unit_of_measurement) || fallback;
+    };
 
-    const tempState = this.hass?.states[this.config?.temperature_entity || ""];
-    const humidityState = this.hass?.states[
-      this.config?.humidity_entity || ""
+    const preferredUnit = config.temperature_unit || "C";
+    const tempEntityUnit = entityUnit("temperature_entity", "°C");
+    const sensorIsF = tempEntityUnit === "°F" || tempEntityUnit === "F";
+    const userWantsF = preferredUnit === "F";
+    const displayTempUnit = userWantsF ? "°F" : "°C";
+    const tempHistory = (userWantsF && !sensorIsF)
+      ? this.temperatureHistory.map(p => ({ ...p, value: celsiusToFahrenheit(p.value) }))
+      : (!userWantsF && sensorIsF)
+      ? this.temperatureHistory.map(p => ({ ...p, value: fahrenheitToCelsius(p.value) }))
+      : this.temperatureHistory;
+    const tempMin = userWantsF ? config.temp_f_min : config.temp_c_min;
+    const tempMax = userWantsF ? config.temp_f_max : config.temp_c_max;
+
+    return [
+      {
+        id: "temperature", canvasId: "temp-chart",
+        label: "Temperature", color: "#ff6b6b",
+        unit: displayTempUnit, history: tempHistory,
+        thresholds: collect(
+          thresh(tempMin, "rgba(100,150,255,0.5)", "Cold"),
+          thresh(tempMax, "rgba(255,100,80,0.5)", "Hot"),
+        ),
+      },
+      {
+        id: "humidity", canvasId: "humidity-chart",
+        label: "Humidity", color: "#4dabf7",
+        unit: entityUnit("humidity_entity", "%"), history: this.humidityHistory,
+        thresholds: collect(
+          thresh(config.humidity_min, "rgba(255,180,50,0.5)", "Dry"),
+          thresh(config.humidity_max, "rgba(80,160,255,0.5)", "Wet"),
+        ),
+      },
+      {
+        id: "co2", canvasId: "co2-chart",
+        label: "CO₂", color: "#a9e34b",
+        unit: entityUnit("co2_entity", "ppm"), history: this.co2History,
+        thresholds: collect(
+          thresh(config.co2_good, "rgba(100,220,100,0.5)", "Good"),
+          thresh(config.co2_warning, "rgba(255,180,50,0.5)", "Stuffy"),
+          thresh(config.co2_poor, "rgba(255,80,80,0.5)", "Poor"),
+        ),
+      },
+      {
+        id: "no2", canvasId: "no2-chart",
+        label: "NO₂", color: "#ffa94d",
+        unit: entityUnit("no2_entity", ""), history: this.no2History,
+        thresholds: collect(
+          thresh(config.no2_good, "rgba(100,220,100,0.5)", "Good"),
+          thresh(config.no2_warning, "rgba(255,180,50,0.5)", "Warning"),
+          thresh(config.no2_poor, "rgba(255,80,80,0.5)", "Poor"),
+        ),
+      },
+      {
+        id: "pm25", canvasId: "pm25-chart",
+        label: "PM 2.5", color: "#da77f2",
+        unit: entityUnit("pm25_entity", "µg/m³"), history: this.pm25History,
+        thresholds: collect(
+          thresh(config.pm25_good, "rgba(100,220,100,0.5)", "Good"),
+          thresh(config.pm25_warning, "rgba(255,180,50,0.5)", "Warning"),
+          thresh(config.pm25_poor, "rgba(255,80,80,0.5)", "Poor"),
+        ),
+      },
+      {
+        id: "pm10", canvasId: "pm10-chart",
+        label: "PM 10", color: "#74c0fc",
+        unit: entityUnit("pm10_entity", "µg/m³"), history: this.pm10History,
+        thresholds: collect(
+          thresh(config.pm10_good, "rgba(100,220,100,0.5)", "Good"),
+          thresh(config.pm10_warning, "rgba(255,180,50,0.5)", "Warning"),
+          thresh(config.pm10_poor, "rgba(255,80,80,0.5)", "Poor"),
+        ),
+      },
+      {
+        id: "voc", canvasId: "voc-chart",
+        label: "VOC", color: "#20c997",
+        unit: entityUnit("voc_entity", ""), history: this.vocHistory,
+        thresholds: collect(
+          thresh(config.voc_good, "rgba(100,220,100,0.5)", "Good"),
+          thresh(config.voc_warning, "rgba(255,180,50,0.5)", "Warning"),
+          thresh(config.voc_poor, "rgba(255,80,80,0.5)", "Poor"),
+        ),
+      },
     ];
-    const co2State = this.config?.co2_entity
-      ? this.hass?.states[this.config.co2_entity]
-      : undefined;
-    const no2State = this.config?.no2_entity
-      ? this.hass?.states[this.config.no2_entity]
-      : undefined;
-    const pm25State = this.config?.pm25_entity
-      ? this.hass?.states[this.config.pm25_entity]
-      : undefined;
-    const pm10State = this.config?.pm10_entity
-      ? this.hass?.states[this.config.pm10_entity]
-      : undefined;
-    const vocState = this.config?.voc_entity
-      ? this.hass?.states[this.config.voc_entity]
-      : undefined;
-    const tempUnit = tempState?.attributes.unit_of_measurement || "°C";
-    const humidityUnit = humidityState?.attributes.unit_of_measurement || "%";
-    const co2Unit = co2State?.attributes.unit_of_measurement || "ppm";
-    const no2Unit = no2State?.attributes.unit_of_measurement || "";
-    const pm25Unit = pm25State?.attributes.unit_of_measurement || "µg/m³";
-    const pm10Unit = pm10State?.attributes.unit_of_measurement || "µg/m³";
-    const vocUnit = vocState?.attributes.unit_of_measurement || "";
+  }
 
-    // Update or create temperature chart
-    if (tempCanvas && this.temperatureHistory.length > 0) {
-      // Get the appropriate temperature thresholds based on the selected unit
-      const preferredUnit = this.config?.temperature_unit || "C";
-      const sensorIsF = tempUnit === "°F" || tempUnit === "F";
-      const userWantsF = preferredUnit === "F";
+  private updateCharts(): void {
+    for (const def of this.getSensorDefs()) {
+      const canvas = this.shadowRoot?.getElementById(def.canvasId) as HTMLCanvasElement | null;
 
-      const convertedTempHistory = (userWantsF && !sensorIsF)
-        ? this.temperatureHistory.map(p => ({ ...p, value: celsiusToFahrenheit(p.value) }))
-        : (!userWantsF && sensorIsF)
-        ? this.temperatureHistory.map(p => ({ ...p, value: fahrenheitToCelsius(p.value) }))
-        : this.temperatureHistory;
-
-      const displayTempUnit = userWantsF ? "°F" : "°C";
-
-      const tempMin = userWantsF ? this.config?.temp_f_min : this.config?.temp_c_min;
-      const tempMax = userWantsF ? this.config?.temp_f_max : this.config?.temp_c_max;
-
-      const tempThresholds = [
-        tempMin != null
-          ? { value: tempMin, color: "rgba(100,150,255,0.5)", label: "Cold" }
-          : null,
-        tempMax != null
-          ? { value: tempMax, color: "rgba(255,100,80,0.5)", label: "Hot" }
-          : null
-      ].filter((t): t is { value: number; color: string; label: string } => t != null);
-      const tempConfig = this.getChartConfig(
-        convertedTempHistory,
-        "Temperature",
-        "#ff6b6b",
-        displayTempUnit,
-        tempThresholds
-      );
-      if (this.temperatureChart) {
-        this.temperatureChart.data = tempConfig.data;
-        this.temperatureChart.update("none");
-      } else {
-        this.temperatureChart = new Chart(tempCanvas, tempConfig);
+      if (!canvas) {
+        this.charts.get(def.id)?.destroy();
+        this.charts.delete(def.id);
+        continue;
       }
-    }
 
-    // Update or create humidity chart
-    if (humidityCanvas && this.humidityHistory.length > 0) {
-      const humidityThresholds = [
-        this.config?.humidity_min != null
-          ? { value: this.config.humidity_min, color: "rgba(255,180,50,0.5)", label: "Dry" }
-          : null,
-        this.config?.humidity_max != null
-          ? { value: this.config.humidity_max, color: "rgba(80,160,255,0.5)", label: "Wet" }
-          : null
-      ].filter((t): t is { value: number; color: string; label: string } => t != null);
-      const humidityConfig = this.getChartConfig(
-        this.humidityHistory,
-        "Humidity",
-        "#4dabf7",
-        humidityUnit,
-        humidityThresholds
-      );
-      if (this.humidityChart) {
-        this.humidityChart.data = humidityConfig.data;
-        this.humidityChart.update("none");
-      } else {
-        this.humidityChart = new Chart(humidityCanvas, humidityConfig);
-      }
-    }
+      if (def.history.length === 0) continue;
 
-    // Update or create CO2 chart
-    if (co2Canvas && this.co2History.length > 0) {
-      const co2Thresholds = [
-        this.config?.co2_good != null
-          ? { value: this.config.co2_good, color: "rgba(100,220,100,0.5)", label: "Good" }
-          : null,
-        this.config?.co2_warning != null
-          ? { value: this.config.co2_warning, color: "rgba(255,180,50,0.5)", label: "Stuffy" }
-          : null,
-        this.config?.co2_poor != null
-          ? { value: this.config.co2_poor, color: "rgba(255,80,80,0.5)", label: "Poor" }
-          : null
-      ].filter((t): t is { value: number; color: string; label: string } => t != null);
-      const co2Config = this.getChartConfig(
-        this.co2History,
-        "CO₂",
-        "#a9e34b",
-        co2Unit,
-        co2Thresholds
-      );
-      if (this.co2Chart) {
-        this.co2Chart.data = co2Config.data;
-        this.co2Chart.update("none");
+      const chartConfig = this.getChartConfig(def.history, def.label, def.color, def.unit, def.thresholds);
+      const existing = this.charts.get(def.id);
+      if (existing) {
+        existing.data = chartConfig.data;
+        existing.update("none");
       } else {
-        this.co2Chart = new Chart(co2Canvas, co2Config);
-      }
-    }
-
-    // Update or create NO2 chart
-    if (no2Canvas && this.no2History.length > 0) {
-      const no2Thresholds = [
-        this.config?.no2_good != null
-          ? { value: this.config.no2_good, color: "rgba(100,220,100,0.5)", label: "Good" }
-          : null,
-        this.config?.no2_warning != null
-          ? { value: this.config.no2_warning, color: "rgba(255,180,50,0.5)", label: "Warning" }
-          : null,
-        this.config?.no2_poor != null
-          ? { value: this.config.no2_poor, color: "rgba(255,80,80,0.5)", label: "Poor" }
-          : null
-      ].filter((t): t is { value: number; color: string; label: string } => t != null);
-      const no2Config = this.getChartConfig(
-        this.no2History,
-        "NO₂",
-        "#ffa94d",
-        no2Unit,
-        no2Thresholds
-      );
-      if (this.no2Chart) {
-        this.no2Chart.data = no2Config.data;
-        this.no2Chart.update("none");
-      } else {
-        this.no2Chart = new Chart(no2Canvas, no2Config);
-      }
-    }
-
-    // Update or create PM2.5 chart
-    if (pm25Canvas && this.pm25History.length > 0) {
-      const pm25Thresholds = [
-        this.config?.pm25_good != null
-          ? { value: this.config.pm25_good, color: "rgba(100,220,100,0.5)", label: "Good" }
-          : null,
-        this.config?.pm25_warning != null
-          ? { value: this.config.pm25_warning, color: "rgba(255,180,50,0.5)", label: "Warning" }
-          : null,
-        this.config?.pm25_poor != null
-          ? { value: this.config.pm25_poor, color: "rgba(255,80,80,0.5)", label: "Poor" }
-          : null
-      ].filter((t): t is { value: number; color: string; label: string } => t != null);
-      const pm25Config = this.getChartConfig(
-        this.pm25History,
-        "PM 2.5",
-        "#da77f2",
-        pm25Unit,
-        pm25Thresholds
-      );
-      if (this.pm25Chart) {
-        this.pm25Chart.data = pm25Config.data;
-        this.pm25Chart.update("none");
-      } else {
-        this.pm25Chart = new Chart(pm25Canvas, pm25Config);
-      }
-    }
-
-    // Update or create PM10 chart
-    if (pm10Canvas && this.pm10History.length > 0) {
-      const pm10Thresholds = [
-        this.config?.pm10_good != null
-          ? { value: this.config.pm10_good, color: "rgba(100,220,100,0.5)", label: "Good" }
-          : null,
-        this.config?.pm10_warning != null
-          ? { value: this.config.pm10_warning, color: "rgba(255,180,50,0.5)", label: "Warning" }
-          : null,
-        this.config?.pm10_poor != null
-          ? { value: this.config.pm10_poor, color: "rgba(255,80,80,0.5)", label: "Poor" }
-          : null
-      ].filter((t): t is { value: number; color: string; label: string } => t != null);
-      const pm10Config = this.getChartConfig(
-        this.pm10History,
-        "PM 10",
-        "#74c0fc",
-        pm10Unit,
-        pm10Thresholds
-      );
-      if (this.pm10Chart) {
-        this.pm10Chart.data = pm10Config.data;
-        this.pm10Chart.update("none");
-      } else {
-        this.pm10Chart = new Chart(pm10Canvas, pm10Config);
-      }
-    }
-
-    // Update or create VOC chart
-    if (vocCanvas && this.vocHistory.length > 0) {
-      const vocThresholds = [
-        this.config?.voc_good != null
-          ? { value: this.config.voc_good, color: "rgba(100,220,100,0.5)", label: "Good" }
-          : null,
-        this.config?.voc_warning != null
-          ? { value: this.config.voc_warning, color: "rgba(255,180,50,0.5)", label: "Warning" }
-          : null,
-        this.config?.voc_poor != null
-          ? { value: this.config.voc_poor, color: "rgba(255,80,80,0.5)", label: "Poor" }
-          : null
-      ].filter((t): t is { value: number; color: string; label: string } => t != null);
-      const vocConfig = this.getChartConfig(
-        this.vocHistory,
-        "VOC",
-        "#20c997",
-        vocUnit,
-        vocThresholds
-      );
-      if (this.vocChart) {
-        this.vocChart.data = vocConfig.data;
-        this.vocChart.update("none");
-      } else {
-        this.vocChart = new Chart(vocCanvas, vocConfig);
+        this.charts.set(def.id, new Chart(canvas, chartConfig));
       }
     }
   }
