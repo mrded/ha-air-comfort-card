@@ -281,6 +281,31 @@ export const cardStyles = css`
     }
   }
 
+  .air-quality-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+    font-size: 0.9em;
+    color: var(--secondary-text-color, rgba(255, 255, 255, 0.6));
+  }
+
+  .aq-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .aq-good { background: #40c057; }
+  .aq-moderate { background: #fd7e14; }
+  .aq-poor { background: #fa5252; }
+
+  .aq-text {
+    color: var(--primary-text-color, #ffffff);
+  }
+
   .history-section {
     display: flex;
     flex-direction: column;

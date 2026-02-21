@@ -10,6 +10,7 @@ import "chartjs-adapter-date-fns";
 import { CardConfig, HomeAssistant, HistoryState, LovelaceCard } from "./types";
 import { cardStyles } from "./styles";
 import { calculateComfortZone, celsiusToFahrenheit, fahrenheitToCelsius } from "./comfort-zone";
+import { calculateAirQuality, SensorReading } from "./air-quality";
 import "./air-comfort-card-editor";
 
 Chart.register(...registerables);
@@ -680,6 +681,7 @@ private getSensorDefs() {
     const indicatorY = actualRadius * Math.sin(indicatorAngle);
 
     const showWarning = !isInComfortZone;
+    const aqStatus = this.calculateAirQuality();
 
     return html`
       <div class="card-content">
@@ -732,6 +734,13 @@ private getSensorDefs() {
           </div>
         </div>
 
+    ${aqStatus ? html`
+        <div class="air-quality-section">
+          <span class="aq-dot aq-${aqStatus.level}"></span>
+          <span class="aq-text">Air quality: <strong>${aqStatus.label}</strong></span>
+        </div>
+      ` : ''}
+
     ${this.renderCharts()}
   </div>
 `;
@@ -739,6 +748,30 @@ private getSensorDefs() {
 
   private toggleHistory(): void {
     this.historyExpanded = !this.historyExpanded;
+  }
+
+  private calculateAirQuality() {
+    if (!this.config || !this.hass) return null;
+
+    const candidates = [
+      { entity: this.config.co2_entity,  good: this.config.co2_good,  warning: this.config.co2_warning  },
+      { entity: this.config.no2_entity,  good: this.config.no2_good,  warning: this.config.no2_warning  },
+      { entity: this.config.pm25_entity, good: this.config.pm25_good, warning: this.config.pm25_warning },
+      { entity: this.config.pm10_entity, good: this.config.pm10_good, warning: this.config.pm10_warning },
+      { entity: this.config.voc_entity,  good: this.config.voc_good,  warning: this.config.voc_warning  },
+    ];
+
+    const readings: SensorReading[] = [];
+    for (const { entity, good, warning } of candidates) {
+      if (!entity || good == null || warning == null) continue;
+      const state = this.hass.states[entity];
+      if (!state) continue;
+      const value = parseFloat(state.state);
+      if (isNaN(value)) continue;
+      readings.push({ value, good, warning });
+    }
+
+    return calculateAirQuality(readings);
   }
 
   private handleHistoryToggleKeyDown(event: KeyboardEvent): void {
