@@ -12,6 +12,7 @@ A custom Home Assistant card that visualizes indoor air comfort using temperatur
 - 🎯 **Circular Comfort Dial**: Visual representation of comfort zones with color-coded regions
 - 📍 **Moving Indicator**: Dynamic dot that shows current conditions on the dial
 - 🌡️ **Temperature & Humidity Display**: Clear readings with customizable units
+- 🟢 **Air Quality Status**: Overall air quality message (Good / Moderate / Poor) derived from all configured air quality sensors, based on WHO 2021 and ASHRAE guidelines
 - 📊 **24-Hour History Charts**: Line graphs for temperature, humidity, CO2, NO2, PM 2.5, PM 10, and VOC
 - 🎨 **Theme-Aware**: Automatically adapts to your Home Assistant theme
 - ⚙️ **Configurable**: Customize visibility of different elements via YAML
@@ -157,7 +158,9 @@ voc_poor: 400
 
 ## How It Works
 
-The card calculates comfort levels based on commonly accepted indoor comfort standards:
+### Thermal Comfort Dial
+
+The card calculates comfort levels based on commonly accepted indoor comfort standards (ASHRAE 55):
 
 - **Ideal Zone**: 20-24°C (68-75°F) with 40-60% humidity
 - **Color Zones**:
@@ -167,6 +170,30 @@ The card calculates comfort levels based on commonly accepted indoor comfort sta
   - 🔵 **Blue**: Very uncomfortable
 
 The moving dot indicator shows your current conditions relative to these zones, making it easy to see at a glance whether your indoor environment needs adjustment.
+
+### Air Quality Status
+
+When one or more air quality sensors are configured (CO2, NO2, PM 2.5, PM 10, VOC), the card displays an overall **Air quality** message below the temperature and humidity readings.
+
+The status reflects the worst sensor reading across all configured sensors:
+
+| Status | Indicator | Meaning |
+|--------|-----------|---------|
+| **Good** | 🟢 | All sensors within their `*_good` threshold |
+| **Moderate** | 🟠 | At least one sensor above `*_good`, none above `*_warning` |
+| **Poor** | 🔴 | At least one sensor above `*_warning` |
+
+Default thresholds are aligned with **WHO 2021 air quality guidelines** and **ASHRAE 62.1**:
+
+| Sensor | Good | Moderate | Poor |
+|--------|------|----------|------|
+| CO2 | ≤ 800 ppm | ≤ 1200 ppm | > 1200 ppm |
+| NO2 | ≤ 50 µg/m³ | ≤ 150 µg/m³ | > 150 µg/m³ |
+| PM 2.5 | ≤ 15 µg/m³ | ≤ 35 µg/m³ | > 35 µg/m³ |
+| PM 10 | ≤ 45 µg/m³ | ≤ 100 µg/m³ | > 100 µg/m³ |
+| VOC | ≤ 150 | ≤ 250 | > 250 |
+
+All thresholds are fully configurable. The `*_poor` values only affect the chart reference lines and do not affect the status message.
 
 ## Development
 
