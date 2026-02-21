@@ -136,8 +136,8 @@ export const cardStyles = css`
 
   .dial-outer-ring {
     position: absolute;
-    width: 80%;
-    height: 80%;
+    width: 70%;
+    height: 70%;
     border-radius: 50%;
     border: 2px solid rgba(255, 255, 255, 0.2);
     top: 50%;
@@ -173,33 +173,33 @@ export const cardStyles = css`
 
   .dial-label {
     position: absolute;
-    font-size: 0.9em;
+    font-size: 0.75em;
     font-weight: 500;
     color: var(--primary-text-color, #ffffff);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
   }
 
   .label-top {
-    top: 6%;
+    top: 7%;
     left: 50%;
     transform: translateX(-50%);
   }
 
   .label-right {
-    right: 6%;
+    left: 87%;
     top: 50%;
     transform: translateY(-50%);
   }
 
   .label-bottom {
-    bottom: 6%;
+    bottom: 7%;
     left: 50%;
     transform: translateX(-50%);
   }
 
   .label-left {
-    left: 6%;
+    right: 87%;
     top: 50%;
     transform: translateY(-50%);
   }
