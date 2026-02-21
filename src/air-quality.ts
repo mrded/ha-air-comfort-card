@@ -51,3 +51,18 @@ export function calculateAirQuality(readings: SensorReading[]): AirQualityResult
 
   return { level: worst, label: LEVEL_LABELS[worst] };
 }
+
+const AQ_PHRASES: Record<AirQualityLevel, string> = {
+  good:     'clean air',
+  moderate: 'moderate air',
+  poor:     'poor air',
+};
+
+/**
+ * Returns a natural-language phrase for an air quality level,
+ * suitable for use as the trailing part of a combined status sentence.
+ * e.g. "clean air", "moderate air", "poor air"
+ */
+export function airQualityPhrase(level: AirQualityLevel): string {
+  return AQ_PHRASES[level];
+}

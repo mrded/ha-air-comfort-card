@@ -110,12 +110,26 @@ export const cardStyles = css`
   }
 
   .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 1.2em;
     font-weight: 500;
     color: var(--primary-text-color, #ffffff);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
+
+  .severity-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .severity-0 { background: #40c057; }
+  .severity-1 { background: #fd7e14; }
+  .severity-2 { background: #fa5252; }
 
   .comfort-dial-container {
     position: relative;
@@ -279,31 +293,6 @@ export const cardStyles = css`
     .reading {
       align-items: flex-start;
     }
-  }
-
-  .air-quality-section {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 16px;
-    font-size: 0.9em;
-    color: var(--secondary-text-color, rgba(255, 255, 255, 0.6));
-  }
-
-  .aq-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .aq-good { background: #40c057; }
-  .aq-moderate { background: #fd7e14; }
-  .aq-poor { background: #fa5252; }
-
-  .aq-text {
-    color: var(--primary-text-color, #ffffff);
   }
 
   .history-section {

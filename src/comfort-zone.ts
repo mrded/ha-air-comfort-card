@@ -138,9 +138,9 @@ export function calculateComfortZone(
         statusText =
           absHumidityDev > HUMIDITY_COMBINATION_THRESHOLD
             ? humidity < humidityMin
-              ? "WARM & DRY"
-              : "WARM & HUMID"
-            : "WARM";
+              ? "HOT & DRY"
+              : "HOT & HUMID"
+            : "HOT";
       }
     } else {
       // Humidity is the primary issue
@@ -149,14 +149,14 @@ export function calculateComfortZone(
           absTempDev > TEMP_COMBINATION_THRESHOLD
             ? temp < tempMin
               ? "COLD & DRY"
-              : "WARM & DRY"
+              : "HOT & DRY"
             : "DRY";
       } else {
         statusText =
           absTempDev > TEMP_COMBINATION_THRESHOLD
             ? temp < tempMin
               ? "COLD & HUMID"
-              : "WARM & HUMID"
+              : "HOT & HUMID"
             : "HUMID";
       }
     }
@@ -170,4 +170,24 @@ export function calculateComfortZone(
     tempDeviation,
     humidityDeviation
   };
+}
+
+const THERMAL_NATURAL_LABELS: Record<string, string> = {
+  'PLEASANT':     'Comfortable',
+  'COLD':         'Cold',
+  'HOT':          'Hot',
+  'DRY':          'Dry',
+  'HUMID':        'Humid',
+  'COLD & DRY':   'Cold & dry',
+  'COLD & HUMID': 'Cold & humid',
+  'HOT & DRY':   'Hot & dry',
+  'HOT & HUMID': 'Hot & humid',
+};
+
+/**
+ * Converts an uppercase comfort zone status text to a natural-case label.
+ * Falls back to the original text if no mapping exists.
+ */
+export function thermalStatusLabel(statusText: string): string {
+  return THERMAL_NATURAL_LABELS[statusText] ?? statusText;
 }

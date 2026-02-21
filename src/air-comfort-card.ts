@@ -11,6 +11,7 @@ import { CardConfig, HomeAssistant, HistoryState, LovelaceCard } from "./types";
 import { cardStyles } from "./styles";
 import { calculateComfortZone, celsiusToFahrenheit, fahrenheitToCelsius } from "./comfort-zone";
 import { calculateAirQuality, SensorReading } from "./air-quality";
+import { dominantStatus } from "./status";
 import "./air-comfort-card-editor";
 
 Chart.register(...registerables);
@@ -682,12 +683,16 @@ private getSensorDefs() {
 
     const showWarning = !isInComfortZone;
     const aqStatus = this.calculateAirQuality();
+    const { label: statusLabel, severity } = dominantStatus(statusText, aqStatus);
 
     return html`
       <div class="card-content">
         <div class="card-header">
           <div class="card-title">${this.config.name || "Air Comfort"}</div>
-          <div class="status-badge">${statusText}</div>
+          <div class="status-badge">
+            <span class="severity-dot severity-${severity}"></span>
+            ${statusLabel}
+          </div>
         </div>
 
         <div
@@ -702,7 +707,7 @@ private getSensorDefs() {
               style="transform: translate(-50%, -50%) translate(${indicatorX}px, ${indicatorY}px);"
             ></div>
 
-            <div class="dial-label label-top">WARM</div>
+            <div class="dial-label label-top">HOT</div>
             <div class="dial-label label-right">HUMID</div>
             <div class="dial-label label-bottom">COLD</div>
             <div class="dial-label label-left">DRY</div>
@@ -733,13 +738,6 @@ private getSensorDefs() {
             </div>
           </div>
         </div>
-
-    ${aqStatus ? html`
-        <div class="air-quality-section">
-          <span class="aq-dot aq-${aqStatus.level}"></span>
-          <span class="aq-text">Air quality: <strong>${aqStatus.label}</strong></span>
-        </div>
-      ` : ''}
 
     ${this.renderCharts()}
   </div>

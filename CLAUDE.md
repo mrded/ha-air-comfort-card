@@ -53,6 +53,27 @@ The card fetches 24-hour history data from Home Assistant's history API and disp
 
 The card registers itself via `customCards` array and implements the standard Lovelace card interface (`setConfig`, `getCardSize`, `getConfigElement`). It uses `ha-entity-picker` components in the editor for entity selection. History data is fetched via `hass.callApi()` using the Home Assistant history API.
 
+## General Development Rules
+
+### Write code with testability in mind
+
+- **Extract logic from the class.** Business logic (calculations, mappings, classifications) must live in pure functions in dedicated modules (e.g. `src/comfort-zone.ts`, `src/air-quality.ts`), not inside the `AirComfortCard` LitElement class.
+- **Keep class methods thin.** Class methods should only gather inputs (from `this.hass`, `this.config`) and delegate to the pure functions. No logic that could be unit-tested should live inside the class.
+- **Pure functions are the default.** If a function doesn't need DOM, HA state, or side effects — it must be a pure exported function with a matching test.
+
+### Two-tier testing strategy
+
+| Layer | Location | Runner | Tests |
+|-------|----------|--------|-------|
+| Unit | `src/*.test.ts` | `bun test src/` | Pure functions — algorithms, mappings, classifications |
+| Integration | `tests/*.spec.ts` | Playwright | Rendered card behaviour — DOM output, user interactions, config changes |
+
+After **any** code change, before considering the work done:
+
+1. **Unit tests** — add or update tests for every changed pure function. Run `bun test src/` and confirm all pass.
+2. **Integration tests** — if the rendered output changes (text, visibility, structure), update `tests/card.spec.ts` to match. Run Playwright to confirm.
+3. **Docs** — update `README.md` and `info.md` to reflect what changed.
+
 ## Checklist: Adding or Removing a Card Setting
 
 When a configuration option (e.g. `show_temperature_graph`) is added, removed, or renamed, update **all** of these locations:

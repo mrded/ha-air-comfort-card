@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { calculateAirQuality, classifyReading } from "./air-quality";
+import { calculateAirQuality, classifyReading, airQualityPhrase } from "./air-quality";
 
 describe("classifyReading", () => {
   it("returns 'good' when value is below the good threshold", () => {
@@ -144,5 +144,25 @@ describe("calculateAirQuality", () => {
       ]);
       expect(result?.level).toBe('poor');
     });
+  });
+});
+
+describe("airQualityPhrase", () => {
+  it("returns 'clean air' for good", () => {
+    expect(airQualityPhrase('good')).toBe('clean air');
+  });
+
+  it("returns 'moderate air' for moderate", () => {
+    expect(airQualityPhrase('moderate')).toBe('moderate air');
+  });
+
+  it("returns 'poor air' for poor", () => {
+    expect(airQualityPhrase('poor')).toBe('poor air');
+  });
+
+  it("produces grammatically correct combined phrases with thermal labels", () => {
+    expect(`Comfortable, ${airQualityPhrase('good')}`).toBe('Comfortable, clean air');
+    expect(`Cold & dry, ${airQualityPhrase('poor')}`).toBe('Cold & dry, poor air');
+    expect(`Warm & humid, ${airQualityPhrase('moderate')}`).toBe('Warm & humid, moderate air');
   });
 });
