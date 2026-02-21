@@ -649,7 +649,7 @@ private getSensorDefs() {
 
     // Calculate indicator position
     const innerRadius = this.dialSize * 0.2;
-    const outerRadius = this.dialSize * 0.4;
+    const outerRadius = this.dialSize * 0.35;
     const MAX_RADIAL_DISTANCE_SCALE = 1.5;
 
     // Continuous distance from comfort zone center (0=center, 1=at zone boundary, >1=outside)
