@@ -38,8 +38,8 @@ test.beforeEach(async ({ page }) => {
 // 1. Comfort status — driven by slider values against comfort thresholds
 //    Thermal: temp 20–24 °C, humidity 40–60 % (configurable)
 //    AQ: CO2 800/1200 ppm, NO2 50/150 µg/m³, PM2.5 15/35 µg/m³,
-//        PM10 45/100 µg/m³, VOC 150/250 (hardcoded, WHO 2021 / ASHRAE 62.1)
-// ---------------------------------------------------------------------------
+//        PM10 45/100 µg/m³ (WHO 2021 / ASHRAE 62.1), VOC 150/250
+//        (hardcoded, based on a common IAQ guideline)
 // The test harness has all AQ sensors at good defaults (CO2=450, NO2=30,
 // PM2.5=10, PM10=20, VOC=100), so thermal status is always dominant.
 // The status badge contains a dot element + text; use toContainText to
