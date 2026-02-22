@@ -7,7 +7,7 @@ import {
   ScatterDataPoint
 } from "chart.js";
 import "chartjs-adapter-date-fns";
-import { CardConfig, HomeAssistant, HistoryState, LovelaceCard } from "./types";
+import { CardConfig, HomeAssistant, HistoryState, LovelaceCard, stripDeprecatedKeys } from "./types";
 import { cardStyles } from "./styles";
 import { calculateComfortZone, celsiusToFahrenheit, fahrenheitToCelsius } from "./comfort-zone";
 import { calculateAirQuality, AQ_THRESHOLDS, SensorReading } from "./air-quality";
@@ -81,7 +81,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       temp_f_max: 75,
       humidity_min: 40,
       humidity_max: 60,
-      ...config
+      ...stripDeprecatedKeys(config)
     };
   }
 

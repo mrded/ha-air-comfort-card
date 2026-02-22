@@ -1,3 +1,28 @@
+export const DEPRECATED_KEYS = [
+  'show_temperature_graph',
+  'show_humidity_graph',
+  'show_co2_graph',
+  'show_no2_graph',
+  'show_pm25_graph',
+  'show_pm10_graph',
+  'show_voc_graph',
+  'temp_min',
+  'temp_max',
+  'co2_good', 'co2_warning', 'co2_poor',
+  'no2_good', 'no2_warning', 'no2_poor',
+  'pm25_good', 'pm25_warning', 'pm25_poor',
+  'pm10_good', 'pm10_warning', 'pm10_poor',
+  'voc_good', 'voc_warning', 'voc_poor',
+] as const;
+
+export function stripDeprecatedKeys(config: CardConfig): CardConfig {
+  const cleaned = { ...config } as Record<string, unknown>;
+  for (const key of DEPRECATED_KEYS) {
+    delete cleaned[key];
+  }
+  return cleaned as unknown as CardConfig;
+}
+
 export interface CardConfig {
   type: string;
   temperature_entity: string;

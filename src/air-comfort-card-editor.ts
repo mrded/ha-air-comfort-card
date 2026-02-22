@@ -1,6 +1,6 @@
 import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { CardConfig, HomeAssistant } from "./types";
+import { CardConfig, HomeAssistant, stripDeprecatedKeys } from "./types";
 import { editorStyles } from "./styles";
 
 type EntityField = "temperature_entity" | "humidity_entity" | "co2_entity" | "no2_entity" | "pm25_entity" | "pm10_entity" | "voc_entity";
@@ -58,7 +58,7 @@ export class AirComfortCardEditor extends LitElement {
   }
 
   public setConfig(config: CardConfig): void {
-    this.config = config;
+    this.config = stripDeprecatedKeys(config);
   }
 
   // --- Rendering ---
