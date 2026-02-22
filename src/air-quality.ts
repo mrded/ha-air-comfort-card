@@ -20,14 +20,6 @@ const LEVEL_LABELS: Record<AirQualityLevel, string> = {
 };
 
 /**
- * Classifies a single sensor reading against its thresholds.
- *
- * Threshold interpretation (WHO 2021 / ASHRAE defaults):
- *   value ≤ good     → 'good'     (e.g. PM2.5 ≤ 15 µg/m³, CO₂ ≤ 800 ppm)
- *   value ≤ warning  → 'moderate' (elevated, attention needed)
- *   value > warning  → 'poor'     (action required)
- */
-/**
  * Fixed thresholds based on WHO 2021 air quality guidelines and ASHRAE 62.1.
  * good   = acceptable indoor level
  * warning = elevated; attention or ventilation needed
@@ -41,6 +33,14 @@ export const AQ_THRESHOLDS = {
   voc:  { good: 150,  warning: 250,  poor: 400  }, // common IAQ guideline
 } as const;
 
+/**
+ * Classifies a single sensor reading against its thresholds.
+ *
+ * Threshold interpretation (WHO 2021 / ASHRAE defaults):
+ *   value ≤ good     → 'good'     (e.g. PM2.5 ≤ 15 µg/m³, CO₂ ≤ 800 ppm)
+ *   value ≤ warning  → 'moderate' (elevated, attention needed)
+ *   value > warning  → 'poor'     (action required)
+ */
 export function classifyReading(reading: SensorReading): AirQualityLevel {
   if (reading.value <= reading.good) return 'good';
   if (reading.value <= reading.warning) return 'moderate';
