@@ -113,4 +113,61 @@ describe('dominantStatus', () => {
       expect(dominantStatus('PLEASANT', aq('poor')).label).toBe('Poor air');
     });
   });
+
+  describe('with translations', () => {
+    const de = {
+      status: {
+        PLEASANT:       'Angenehm',
+        COLD:           'Kalt',
+        HOT:            'Warm',
+        DRY:            'Trocken',
+        HUMID:          'Feucht',
+        'COLD & DRY':   'Kalt & trocken',
+        'COLD & HUMID': 'Kalt & feucht',
+        'HOT & DRY':    'Warm & trocken',
+        'HOT & HUMID':  'Warm & feucht',
+      },
+      airQuality: {
+        good:     'Saubere Luft',
+        moderate: 'Mäßige Luft',
+        poor:     'Schlechte Luft',
+      },
+    };
+
+    it('returns translated thermal label', () => {
+      expect(dominantStatus('PLEASANT', null, de)).toEqual({ label: 'Angenehm', severity: 0 });
+      expect(dominantStatus('COLD', null, de)).toEqual({ label: 'Kalt', severity: 1 });
+      expect(dominantStatus('HOT & DRY', null, de)).toEqual({ label: 'Warm & trocken', severity: 2 });
+    });
+
+    it('returns translated AQ label when AQ is dominant', () => {
+      expect(dominantStatus('PLEASANT', aq('poor'), de).label).toBe('Schlechte Luft');
+      expect(dominantStatus('PLEASANT', aq('moderate'), de).label).toBe('Mäßige Luft');
+      expect(dominantStatus('COLD', aq('moderate'), de).label).toBe('Mäßige Luft');
+    });
+
+    it('severity is unaffected by translations', () => {
+      expect(dominantStatus('PLEASANT', null, de).severity).toBe(0);
+      expect(dominantStatus('COLD & DRY', aq('poor'), de).severity).toBe(2);
+    });
+
+    it('falls back to English thermal label when the status key is absent', () => {
+      const partial = { status: {}, airQuality: {} };
+      expect(dominantStatus('PLEASANT', null, partial).label).toBe('Comfortable');
+      expect(dominantStatus('COLD & DRY', null, partial).label).toBe('Cold & dry');
+    });
+
+    it('falls back to English AQ label when the AQ key is absent', () => {
+      const partial = { status: {}, airQuality: {} };
+      expect(dominantStatus('PLEASANT', aq('poor'), partial).label).toBe('Poor air');
+      expect(dominantStatus('COLD', aq('moderate'), partial).label).toBe('Moderate air');
+    });
+
+    it('omitting the translations argument produces the same result as English', () => {
+      expect(dominantStatus('PLEASANT', null)).toEqual(dominantStatus('PLEASANT', null, undefined));
+      expect(dominantStatus('COLD & DRY', aq('moderate'))).toEqual(
+        dominantStatus('COLD & DRY', aq('moderate'), undefined)
+      );
+    });
+  });
 });
