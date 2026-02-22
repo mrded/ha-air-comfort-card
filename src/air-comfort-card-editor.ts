@@ -2,6 +2,7 @@ import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { CardConfig, HomeAssistant, stripDeprecatedKeys } from "./types";
 import { editorStyles } from "./styles";
+import { getTranslations } from "./translations";
 
 type EntityField = "temperature_entity" | "humidity_entity" | "co2_entity" | "no2_entity" | "pm25_entity" | "pm10_entity" | "voc_entity";
 
@@ -68,6 +69,8 @@ export class AirComfortCardEditor extends LitElement {
       return nothing;
     }
 
+    const t = getTranslations(this.hass?.language);
+
     const temperatureUnit = this.config.temperature_unit || "C";
     const tempUnitLabel = temperatureUnit === "F" ? "°F" : "°C";
     const tempMinField = temperatureUnit === "F" ? "temp_f_min" : "temp_c_min";
@@ -77,28 +80,28 @@ export class AirComfortCardEditor extends LitElement {
 
     return html`
       <div class="card-config">
-        ${this._renderTextField("name", "Card Title", "Air Comfort")}
+        ${this._renderTextField("name", t.editor.cardTitle, t.card.title)}
 
         <div class="section">
-          <div class="section-title">Temperature</div>
-          ${this._renderEntityField("temperature_entity", "Temperature Entity", "temperature")}
-          ${this._renderTemperatureUnitSelector()}
-          ${this._renderRangeField(tempMinField, tempMaxField, `Comfort Range (${tempUnitLabel})`, tempDefaultMin, tempDefaultMax)}
+          <div class="section-title">${t.editor.temperatureSection}</div>
+          ${this._renderEntityField("temperature_entity", t.editor.temperatureEntity, "temperature")}
+          ${this._renderTemperatureUnitSelector(t)}
+          ${this._renderRangeField(tempMinField, tempMaxField, `${t.editor.comfortRange} (${tempUnitLabel})`, tempDefaultMin, tempDefaultMax)}
         </div>
 
         <div class="section">
-          <div class="section-title">Humidity</div>
-          ${this._renderEntityField("humidity_entity", "Humidity Entity", "humidity")}
-          ${this._renderRangeField("humidity_min", "humidity_max", "Comfort Range (%)", 40, 60)}
+          <div class="section-title">${t.editor.humiditySection}</div>
+          ${this._renderEntityField("humidity_entity", t.editor.humidityEntity, "humidity")}
+          ${this._renderRangeField("humidity_min", "humidity_max", t.editor.comfortRangeHumidity, 40, 60)}
         </div>
 
         <div class="section">
-          <div class="section-title">Air Quality</div>
-          ${this._renderEntityField("co2_entity", "CO₂ Entity", "carbon_dioxide", false)}
-          ${this._renderEntityField("no2_entity", "NO₂ Entity", "nitrogen_dioxide", false)}
-          ${this._renderEntityField("pm25_entity", "PM 2.5 Entity", "pm25", false)}
-          ${this._renderEntityField("pm10_entity", "PM 10 Entity", "pm10", false)}
-          ${this._renderEntityField("voc_entity", "VOC Entity", "volatile_organic_compounds", false)}
+          <div class="section-title">${t.editor.airQualitySection}</div>
+          ${this._renderEntityField("co2_entity", t.editor.co2Entity, "carbon_dioxide", false)}
+          ${this._renderEntityField("no2_entity", t.editor.no2Entity, "nitrogen_dioxide", false)}
+          ${this._renderEntityField("pm25_entity", t.editor.pm25Entity, "pm25", false)}
+          ${this._renderEntityField("pm10_entity", t.editor.pm10Entity, "pm10", false)}
+          ${this._renderEntityField("voc_entity", t.editor.vocEntity, "volatile_organic_compounds", false)}
         </div>
       </div>
     `;
@@ -167,18 +170,18 @@ export class AirComfortCardEditor extends LitElement {
     `;
   }
 
-  private _renderTemperatureUnitSelector() {
+  private _renderTemperatureUnitSelector(t: ReturnType<typeof getTranslations>) {
     const currentUnit = this.config?.temperature_unit || "C";
     return html`
       <div class="option">
-        <label for="temperature_unit">Display Unit</label>
+        <label for="temperature_unit">${t.editor.displayUnit}</label>
         <select
           id="temperature_unit"
           .value=${currentUnit}
           @change=${this._valueChanged}
         >
-          <option value="C" ?selected=${currentUnit === "C"}>°C (Celsius)</option>
-          <option value="F" ?selected=${currentUnit === "F"}>°F (Fahrenheit)</option>
+          <option value="C" ?selected=${currentUnit === "C"}>${t.editor.celsius}</option>
+          <option value="F" ?selected=${currentUnit === "F"}>${t.editor.fahrenheit}</option>
         </select>
       </div>
     `;

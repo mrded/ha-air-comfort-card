@@ -12,6 +12,7 @@ import { cardStyles } from "./styles";
 import { calculateComfortZone, celsiusToFahrenheit, fahrenheitToCelsius } from "./comfort-zone";
 import { calculateAirQuality, AQ_THRESHOLDS, SensorReading } from "./air-quality";
 import { dominantStatus } from "./status";
+import { getTranslations } from "./translations";
 import "./air-comfort-card-editor";
 
 Chart.register(...registerables);
@@ -378,6 +379,8 @@ private getSensorDefs() {
     const config = this.config;
     if (!config) return [];
 
+    const tr = getTranslations(this.hass?.language);
+
     type Threshold = { value: number; color: string; label: string };
     const thresh = (value: number | undefined, color: string, label: string): Threshold | null =>
       value != null ? { value, color, label } : null;
@@ -405,77 +408,77 @@ private getSensorDefs() {
     return [
       {
         id: "temperature", canvasId: "temp-chart",
-        label: "Temperature", color: "#ff6b6b",
+        label: tr.sensors.temperature, color: "#ff6b6b",
         unit: displayTempUnit, history: tempHistory,
         show: true,
         thresholds: collect(
-          thresh(tempMin, "rgba(100,150,255,0.5)", "Cold"),
-          thresh(tempMax, "rgba(255,100,80,0.5)", "Hot"),
+          thresh(tempMin, "rgba(100,150,255,0.5)", tr.thresholds.cold),
+          thresh(tempMax, "rgba(255,100,80,0.5)", tr.thresholds.hot),
         ),
       },
       {
         id: "humidity", canvasId: "humidity-chart",
-        label: "Humidity", color: "#4dabf7",
+        label: tr.sensors.humidity, color: "#4dabf7",
         unit: entityUnit("humidity_entity", "%"), history: this.humidityHistory,
         show: true,
         thresholds: collect(
-          thresh(config.humidity_min, "rgba(255,180,50,0.5)", "Dry"),
-          thresh(config.humidity_max, "rgba(80,160,255,0.5)", "Wet"),
+          thresh(config.humidity_min, "rgba(255,180,50,0.5)", tr.thresholds.dry),
+          thresh(config.humidity_max, "rgba(80,160,255,0.5)", tr.thresholds.wet),
         ),
       },
       {
         id: "co2", canvasId: "co2-chart",
-        label: "CO₂", color: "#a9e34b",
+        label: tr.sensors.co2, color: "#a9e34b",
         unit: entityUnit("co2_entity", "ppm"), history: this.co2History,
         show: !!config.co2_entity,
         thresholds: collect(
-          thresh(AQ_THRESHOLDS.co2.good, "rgba(100,220,100,0.5)", "Good"),
-          thresh(AQ_THRESHOLDS.co2.warning, "rgba(255,180,50,0.5)", "Stuffy"),
-          thresh(AQ_THRESHOLDS.co2.poor, "rgba(255,80,80,0.5)", "Poor"),
+          thresh(AQ_THRESHOLDS.co2.good, "rgba(100,220,100,0.5)", tr.thresholds.good),
+          thresh(AQ_THRESHOLDS.co2.warning, "rgba(255,180,50,0.5)", tr.thresholds.stuffy),
+          thresh(AQ_THRESHOLDS.co2.poor, "rgba(255,80,80,0.5)", tr.thresholds.poor),
         ),
       },
       {
         id: "no2", canvasId: "no2-chart",
-        label: "NO₂", color: "#ffa94d",
+        label: tr.sensors.no2, color: "#ffa94d",
         unit: entityUnit("no2_entity", ""), history: this.no2History,
         show: !!config.no2_entity,
         thresholds: collect(
-          thresh(AQ_THRESHOLDS.no2.good, "rgba(100,220,100,0.5)", "Good"),
-          thresh(AQ_THRESHOLDS.no2.warning, "rgba(255,180,50,0.5)", "Warning"),
-          thresh(AQ_THRESHOLDS.no2.poor, "rgba(255,80,80,0.5)", "Poor"),
+          thresh(AQ_THRESHOLDS.no2.good, "rgba(100,220,100,0.5)", tr.thresholds.good),
+          thresh(AQ_THRESHOLDS.no2.warning, "rgba(255,180,50,0.5)", tr.thresholds.warning),
+          thresh(AQ_THRESHOLDS.no2.poor, "rgba(255,80,80,0.5)", tr.thresholds.poor),
         ),
       },
       {
         id: "pm25", canvasId: "pm25-chart",
-        label: "PM 2.5", color: "#da77f2",
+        label: tr.sensors.pm25, color: "#da77f2",
         unit: entityUnit("pm25_entity", "µg/m³"), history: this.pm25History,
         show: !!config.pm25_entity,
         thresholds: collect(
-          thresh(AQ_THRESHOLDS.pm25.good, "rgba(100,220,100,0.5)", "Good"),
-          thresh(AQ_THRESHOLDS.pm25.warning, "rgba(255,180,50,0.5)", "Warning"),
-          thresh(AQ_THRESHOLDS.pm25.poor, "rgba(255,80,80,0.5)", "Poor"),
+          thresh(AQ_THRESHOLDS.pm25.good, "rgba(100,220,100,0.5)", tr.thresholds.good),
+          thresh(AQ_THRESHOLDS.pm25.warning, "rgba(255,180,50,0.5)", tr.thresholds.warning),
+          thresh(AQ_THRESHOLDS.pm25.poor, "rgba(255,80,80,0.5)", tr.thresholds.poor),
         ),
       },
       {
         id: "pm10", canvasId: "pm10-chart",
-        label: "PM 10", color: "#74c0fc",
+        label: tr.sensors.pm10, color: "#74c0fc",
         unit: entityUnit("pm10_entity", "µg/m³"), history: this.pm10History,
         show: !!config.pm10_entity,
         thresholds: collect(
-          thresh(AQ_THRESHOLDS.pm10.good, "rgba(100,220,100,0.5)", "Good"),
-          thresh(AQ_THRESHOLDS.pm10.warning, "rgba(255,180,50,0.5)", "Warning"),
-          thresh(AQ_THRESHOLDS.pm10.poor, "rgba(255,80,80,0.5)", "Poor"),
+          thresh(AQ_THRESHOLDS.pm10.good, "rgba(100,220,100,0.5)", tr.thresholds.good),
+          thresh(AQ_THRESHOLDS.pm10.warning, "rgba(255,180,50,0.5)", tr.thresholds.warning),
+          thresh(AQ_THRESHOLDS.pm10.poor, "rgba(255,80,80,0.5)", tr.thresholds.poor),
         ),
       },
       {
         id: "voc", canvasId: "voc-chart",
-        label: "VOC", color: "#20c997",
+        label: tr.sensors.voc, color: "#20c997",
         unit: entityUnit("voc_entity", ""), history: this.vocHistory,
         show: !!config.voc_entity,
         thresholds: collect(
-          thresh(AQ_THRESHOLDS.voc.good, "rgba(100,220,100,0.5)", "Good"),
-          thresh(AQ_THRESHOLDS.voc.warning, "rgba(255,180,50,0.5)", "Warning"),
-          thresh(AQ_THRESHOLDS.voc.poor, "rgba(255,80,80,0.5)", "Poor"),
+          thresh(AQ_THRESHOLDS.voc.good, "rgba(100,220,100,0.5)", tr.thresholds.good),
+          thresh(AQ_THRESHOLDS.voc.warning, "rgba(255,180,50,0.5)", tr.thresholds.warning),
+          thresh(AQ_THRESHOLDS.voc.poor, "rgba(255,80,80,0.5)", tr.thresholds.poor),
         ),
       },
     ];
@@ -529,6 +532,8 @@ private getSensorDefs() {
       return html``;
     }
 
+    const t = getTranslations(this.hass.language);
+
     const tempState = this.hass.states[this.config.temperature_entity];
     const humidityState = this.hass.states[this.config.humidity_entity];
 
@@ -536,9 +541,9 @@ private getSensorDefs() {
       return html`
         <div class="card-content">
           <div class="card-header">
-            <div class="card-title">Air Comfort</div>
+            <div class="card-title">${t.card.title}</div>
           </div>
-          <div>Entity not found</div>
+          <div>${t.card.entityNotFound}</div>
         </div>
       `;
     }
@@ -552,9 +557,9 @@ private getSensorDefs() {
       return html`
         <div class="card-content">
           <div class="card-header">
-            <div class="card-title">Air Comfort</div>
+            <div class="card-title">${t.card.title}</div>
           </div>
-          <div>Invalid sensor values</div>
+          <div>${t.card.invalidSensorValues}</div>
         </div>
       `;
     }
@@ -639,12 +644,12 @@ private getSensorDefs() {
 
     const showWarning = !isInComfortZone;
     const aqStatus = this.calculateAirQuality();
-    const { label: statusLabel, severity } = dominantStatus(statusText, aqStatus);
+    const { label: statusLabel, severity } = dominantStatus(statusText, aqStatus, t);
 
     return html`
       <div class="card-content">
         <div class="card-header">
-          <div class="card-title">${this.config.name || "Air Comfort"}</div>
+          <div class="card-title">${this.config.name || t.card.title}</div>
           <div class="status-badge">
             <span class="severity-dot severity-${severity}"></span>
             ${statusLabel}
@@ -663,16 +668,16 @@ private getSensorDefs() {
               style="transform: translate(-50%, -50%) translate(${indicatorX}px, ${indicatorY}px);"
             ></div>
 
-            <div class="dial-label label-top">HOT</div>
-            <div class="dial-label label-right">HUMID</div>
-            <div class="dial-label label-bottom">COLD</div>
-            <div class="dial-label label-left">DRY</div>
+            <div class="dial-label label-top">${t.dial.hot}</div>
+            <div class="dial-label label-right">${t.dial.humid}</div>
+            <div class="dial-label label-bottom">${t.dial.cold}</div>
+            <div class="dial-label label-left">${t.dial.dry}</div>
           </div>
         </div>
 
         <div class="readings">
           <div class="reading">
-            <div class="reading-label">Temperature</div>
+            <div class="reading-label">${t.readings.temperature}</div>
             <div class="reading-value">
               ${showWarning
                 ? html`
@@ -686,7 +691,7 @@ private getSensorDefs() {
           </div>
 
           <div class="reading">
-            <div class="reading-label">Humidity</div>
+            <div class="reading-label">${t.readings.humidity}</div>
             <div class="reading-value">
               ${humidity.toFixed(0)}<span class="reading-unit"
                 >${humidityUnit}</span
@@ -739,6 +744,8 @@ private getSensorDefs() {
     const visibleDefs = this.getSensorDefs().filter(d => d.show);
     if (visibleDefs.length === 0) return null;
 
+    const t = getTranslations(this.hass?.language);
+
     return html`
       <div class="history-section">
         <div
@@ -750,7 +757,7 @@ private getSensorDefs() {
           @keydown=${this.handleHistoryToggleKeyDown}
         >
           <span>
-            ${this.historyExpanded ? "Hide 24-hour history" : "Show 24-hour history"}
+            ${this.historyExpanded ? t.history.hide : t.history.show}
           </span>
           <svg
             class="history-toggle-icon"
@@ -774,7 +781,7 @@ private getSensorDefs() {
               <div class="charts-container">
                 ${visibleDefs.map(def => html`
                   <div class="chart-wrapper">
-                    <div class="chart-label">${def.label} (24h)</div>
+                    <div class="chart-label">${def.label} ${t.history.chartSuffix}</div>
                     <div class="chart-canvas-container">
                       <canvas id="${def.canvasId}"></canvas>
                     </div>
