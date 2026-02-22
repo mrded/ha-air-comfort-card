@@ -1,3 +1,28 @@
+export const DEPRECATED_KEYS = [
+  'show_temperature_graph',
+  'show_humidity_graph',
+  'show_co2_graph',
+  'show_no2_graph',
+  'show_pm25_graph',
+  'show_pm10_graph',
+  'show_voc_graph',
+  'temp_min',
+  'temp_max',
+  'co2_good', 'co2_warning', 'co2_poor',
+  'no2_good', 'no2_warning', 'no2_poor',
+  'pm25_good', 'pm25_warning', 'pm25_poor',
+  'pm10_good', 'pm10_warning', 'pm10_poor',
+  'voc_good', 'voc_warning', 'voc_poor',
+] as const;
+
+export function stripDeprecatedKeys(config: CardConfig): CardConfig {
+  const cleaned = { ...config } as Record<string, unknown>;
+  for (const key of DEPRECATED_KEYS) {
+    delete cleaned[key];
+  }
+  return cleaned as unknown as CardConfig;
+}
+
 export interface CardConfig {
   type: string;
   temperature_entity: string;
@@ -5,38 +30,16 @@ export interface CardConfig {
   co2_entity?: string;
   name?: string;
   temperature_unit?: 'C' | 'F';
-  show_temperature_graph?: boolean;
-  show_humidity_graph?: boolean;
-  show_co2_graph?: boolean;
   temp_c_min?: number;
   temp_c_max?: number;
   temp_f_min?: number;
   temp_f_max?: number;
   humidity_min?: number;
   humidity_max?: number;
-  co2_good?: number;
-  co2_warning?: number;
-  co2_poor?: number;
   no2_entity?: string;
-  no2_good?: number;
-  no2_warning?: number;
-  no2_poor?: number;
-  show_no2_graph?: boolean;
   pm25_entity?: string;
-  pm25_good?: number;
-  pm25_warning?: number;
-  pm25_poor?: number;
-  show_pm25_graph?: boolean;
   pm10_entity?: string;
-  pm10_good?: number;
-  pm10_warning?: number;
-  pm10_poor?: number;
-  show_pm10_graph?: boolean;
   voc_entity?: string;
-  voc_good?: number;
-  voc_warning?: number;
-  voc_poor?: number;
-  show_voc_graph?: boolean;
 }
 
 export interface EntityState {

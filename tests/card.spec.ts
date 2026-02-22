@@ -22,8 +22,9 @@ test.beforeEach(async ({ page }) => {
   // Wait until the card has rendered its first status badge.
   await expect(card(page).locator('.status-badge')).toBeVisible();
   // Reset all sliders to known-good defaults. mock.json loads a CO2 history
-  // whose latest value (1242 ppm) exceeds the warning threshold, which would
-  // otherwise bleed "Poor air" into every test that doesn't set CO2 explicitly.
+  // whose latest value (1242 ppm) exceeds the hardcoded CO2 warning threshold
+  // (1200 ppm), which would otherwise bleed "Poor air" into every test that
+  // doesn't set CO2 explicitly.
   await setSlider(page, 'temperature', '22');
   await setSlider(page, 'humidity', '50');
   await setSlider(page, 'co2', '450');
@@ -34,9 +35,11 @@ test.beforeEach(async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
-// 1. Comfort status — driven by slider values against default thresholds
-//    (temp 20–24 °C, humidity 40–60 %)
-// ---------------------------------------------------------------------------
+// 1. Comfort status — driven by slider values against comfort thresholds
+//    Thermal: temp 20–24 °C, humidity 40–60 % (configurable)
+//    AQ: CO2 800/1200 ppm, NO2 50/150 µg/m³, PM2.5 15/35 µg/m³,
+//        PM10 45/100 µg/m³ (WHO 2021 / ASHRAE 62.1), VOC 150/250
+//        (hardcoded, based on a common IAQ guideline)
 // The test harness has all AQ sensors at good defaults (CO2=450, NO2=30,
 // PM2.5=10, PM10=20, VOC=100), so thermal status is always dominant.
 // The status badge contains a dot element + text; use toContainText to
@@ -72,7 +75,7 @@ test.describe('comfort status', () => {
     await expect(card(page).locator('.status-badge')).toContainText('Humid');
   });
 
-  test('shows Poor air when CO2 exceeds the warning threshold', async ({ page }) => {
+  test('shows Poor air when CO2 exceeds the warning threshold (1200 ppm)', async ({ page }) => {
     await setSlider(page, 'temperature', '22');
     await setSlider(page, 'humidity', '50');
     await setSlider(page, 'co2', '1500');
@@ -88,7 +91,7 @@ test.describe('comfort status', () => {
     await expect(card(page).locator('.status-badge')).toContainText('Poor air');
   });
 
-  test('shows Moderate air when CO2 is between good and warning thresholds', async ({ page }) => {
+  test('shows Moderate air when CO2 is between good and warning thresholds (800–1200 ppm)', async ({ page }) => {
     await setSlider(page, 'temperature', '22');
     await setSlider(page, 'humidity', '50');
     await setSlider(page, 'co2', '1000');
@@ -130,8 +133,9 @@ test.describe('comfort status', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 2. Custom thresholds — changing the comfort range in the editor changes
-//    which status is shown for the same sensor values
+// 2. Custom thermal thresholds — temperature and humidity comfort ranges are
+//    configurable in the editor; AQ thresholds are hardcoded (WHO 2021 /
+//    ASHRAE 62.1) and not exposed in the editor.
 // ---------------------------------------------------------------------------
 test.describe('custom thresholds via editor', () => {
   const editor = (page: Page) => page.locator('#card-editor');
@@ -244,70 +248,37 @@ test.describe('temperature unit display', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 5. Graph visibility — show/hide individual charts via editor checkboxes
+// 5. Graph visibility — graphs appear when an entity is configured,
+//    disappear when the entity is removed. Temperature and humidity are
+//    always shown (required entities). AQ sensor graphs are optional.
 // ---------------------------------------------------------------------------
 test.describe('graph visibility', () => {
   const editor = (page: Page) => page.locator('#card-editor');
 
-  test('temperature graph is visible by default', async ({ page }) => {
+  test('all graphs visible when all entities are configured', async ({ page }) => {
     await expandHistory(page);
     await expect(card(page).locator('.chart-label', { hasText: 'Temperature (24h)' })).toBeVisible();
-  });
-
-  test('temperature graph disappears when disabled in the editor', async ({ page }) => {
-    await editor(page).locator('#show_temperature_graph').uncheck();
-    await expandHistory(page);
-    await expect(card(page).locator('.chart-label', { hasText: 'Temperature (24h)' })).toHaveCount(0);
-  });
-
-  test('humidity graph can be toggled off and back on', async ({ page }) => {
-    await expandHistory(page);
     await expect(card(page).locator('.chart-label', { hasText: 'Humidity (24h)' })).toBeVisible();
-
-    await editor(page).locator('#show_humidity_graph').uncheck();
-    await expect(card(page).locator('.chart-label', { hasText: 'Humidity (24h)' })).toHaveCount(0);
-
-    await editor(page).locator('#show_humidity_graph').check();
-    await expect(card(page).locator('.chart-label', { hasText: 'Humidity (24h)' })).toBeVisible();
+    await expect(card(page).locator('.chart-label', { hasText: 'CO₂ (24h)' })).toBeVisible();
+    await expect(card(page).locator('.chart-label', { hasText: 'NO₂ (24h)' })).toBeVisible();
+    await expect(card(page).locator('.chart-label', { hasText: 'PM 2.5 (24h)' })).toBeVisible();
+    await expect(card(page).locator('.chart-label', { hasText: 'PM 10 (24h)' })).toBeVisible();
+    await expect(card(page).locator('.chart-label', { hasText: 'VOC (24h)' })).toBeVisible();
   });
 
-  test('CO2 graph is visible by default and can be hidden', async ({ page }) => {
+  test('CO2 graph disappears when CO2 entity is removed', async ({ page }) => {
     await expandHistory(page);
     await expect(card(page).locator('.chart-label', { hasText: 'CO₂ (24h)' })).toBeVisible();
 
-    await editor(page).locator('#show_co2_graph').uncheck();
+    await editor(page).locator('#co2_entity').fill('');
+    await editor(page).locator('#co2_entity').dispatchEvent('input');
     await expect(card(page).locator('.chart-label', { hasText: 'CO₂ (24h)' })).toHaveCount(0);
   });
 
-  test('NO2 graph is visible by default and can be hidden', async ({ page }) => {
+  test('NO2 graph disappears when NO2 entity is removed', async ({ page }) => {
     await expandHistory(page);
-    await expect(card(page).locator('.chart-label', { hasText: 'NO₂ (24h)' })).toBeVisible();
-
-    await editor(page).locator('#show_no2_graph').uncheck();
+    await editor(page).locator('#no2_entity').fill('');
+    await editor(page).locator('#no2_entity').dispatchEvent('input');
     await expect(card(page).locator('.chart-label', { hasText: 'NO₂ (24h)' })).toHaveCount(0);
-  });
-
-  test('PM 2.5 graph is visible by default and can be hidden', async ({ page }) => {
-    await expandHistory(page);
-    await expect(card(page).locator('.chart-label', { hasText: 'PM 2.5 (24h)' })).toBeVisible();
-
-    await editor(page).locator('#show_pm25_graph').uncheck();
-    await expect(card(page).locator('.chart-label', { hasText: 'PM 2.5 (24h)' })).toHaveCount(0);
-  });
-
-  test('PM 10 graph is visible by default and can be hidden', async ({ page }) => {
-    await expandHistory(page);
-    await expect(card(page).locator('.chart-label', { hasText: 'PM 10 (24h)' })).toBeVisible();
-
-    await editor(page).locator('#show_pm10_graph').uncheck();
-    await expect(card(page).locator('.chart-label', { hasText: 'PM 10 (24h)' })).toHaveCount(0);
-  });
-
-  test('VOC graph is visible by default and can be hidden', async ({ page }) => {
-    await expandHistory(page);
-    await expect(card(page).locator('.chart-label', { hasText: 'VOC (24h)' })).toBeVisible();
-
-    await editor(page).locator('#show_voc_graph').uncheck();
-    await expect(card(page).locator('.chart-label', { hasText: 'VOC (24h)' })).toHaveCount(0);
   });
 });
