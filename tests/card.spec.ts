@@ -22,8 +22,9 @@ test.beforeEach(async ({ page }) => {
   // Wait until the card has rendered its first status badge.
   await expect(card(page).locator('.status-badge')).toBeVisible();
   // Reset all sliders to known-good defaults. mock.json loads a CO2 history
-  // whose latest value (1242 ppm) exceeds the warning threshold, which would
-  // otherwise bleed "Poor air" into every test that doesn't set CO2 explicitly.
+  // whose latest value (1242 ppm) exceeds the hardcoded CO2 warning threshold
+  // (1200 ppm), which would otherwise bleed "Poor air" into every test that
+  // doesn't set CO2 explicitly.
   await setSlider(page, 'temperature', '22');
   await setSlider(page, 'humidity', '50');
   await setSlider(page, 'co2', '450');
@@ -34,8 +35,10 @@ test.beforeEach(async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
-// 1. Comfort status — driven by slider values against default thresholds
-//    (temp 20–24 °C, humidity 40–60 %)
+// 1. Comfort status — driven by slider values against comfort thresholds
+//    Thermal: temp 20–24 °C, humidity 40–60 % (configurable)
+//    AQ: CO2 800/1200 ppm, NO2 50/150 µg/m³, PM2.5 15/35 µg/m³,
+//        PM10 45/100 µg/m³, VOC 150/250 (hardcoded, WHO 2021 / ASHRAE 62.1)
 // ---------------------------------------------------------------------------
 // The test harness has all AQ sensors at good defaults (CO2=450, NO2=30,
 // PM2.5=10, PM10=20, VOC=100), so thermal status is always dominant.
@@ -72,7 +75,7 @@ test.describe('comfort status', () => {
     await expect(card(page).locator('.status-badge')).toContainText('Humid');
   });
 
-  test('shows Poor air when CO2 exceeds the warning threshold', async ({ page }) => {
+  test('shows Poor air when CO2 exceeds the warning threshold (1200 ppm)', async ({ page }) => {
     await setSlider(page, 'temperature', '22');
     await setSlider(page, 'humidity', '50');
     await setSlider(page, 'co2', '1500');
@@ -88,7 +91,7 @@ test.describe('comfort status', () => {
     await expect(card(page).locator('.status-badge')).toContainText('Poor air');
   });
 
-  test('shows Moderate air when CO2 is between good and warning thresholds', async ({ page }) => {
+  test('shows Moderate air when CO2 is between good and warning thresholds (800–1200 ppm)', async ({ page }) => {
     await setSlider(page, 'temperature', '22');
     await setSlider(page, 'humidity', '50');
     await setSlider(page, 'co2', '1000');
@@ -130,8 +133,9 @@ test.describe('comfort status', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 2. Custom thresholds — changing the comfort range in the editor changes
-//    which status is shown for the same sensor values
+// 2. Custom thermal thresholds — temperature and humidity comfort ranges are
+//    configurable in the editor; AQ thresholds are hardcoded (WHO 2021 /
+//    ASHRAE 62.1) and not exposed in the editor.
 // ---------------------------------------------------------------------------
 test.describe('custom thresholds via editor', () => {
   const editor = (page: Page) => page.locator('#card-editor');

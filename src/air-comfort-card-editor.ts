@@ -97,45 +97,30 @@ export class AirComfortCardEditor extends LitElement {
         <div class="section">
           <div class="section-title">CO₂</div>
           ${this._renderEntityField("co2_entity", "CO₂ Entity", "carbon_dioxide", false)}
-          ${this._renderThresholdField("co2_good", "Good (ppm)", 800)}
-          ${this._renderThresholdField("co2_warning", "Stuffy (ppm)", 1200)}
-          ${this._renderThresholdField("co2_poor", "Poor (ppm)", 1500)}
           ${this._renderCheckbox("show_co2_graph", "Show Graph")}
         </div>
 
         <div class="section">
           <div class="section-title">NO₂</div>
           ${this._renderEntityField("no2_entity", "NO₂ Entity", "nitrogen_dioxide", false)}
-          ${this._renderThresholdField("no2_good", "Good", 50)}
-          ${this._renderThresholdField("no2_warning", "Warning", 150)}
-          ${this._renderThresholdField("no2_poor", "Poor", 250)}
           ${this._renderCheckbox("show_no2_graph", "Show Graph")}
         </div>
 
         <div class="section">
           <div class="section-title">PM 2.5</div>
           ${this._renderEntityField("pm25_entity", "PM 2.5 Entity", "pm25", false)}
-          ${this._renderThresholdField("pm25_good", "Good (µg/m³)", 15)}
-          ${this._renderThresholdField("pm25_warning", "Warning (µg/m³)", 35)}
-          ${this._renderThresholdField("pm25_poor", "Poor (µg/m³)", 75)}
           ${this._renderCheckbox("show_pm25_graph", "Show Graph")}
         </div>
 
         <div class="section">
           <div class="section-title">PM 10</div>
           ${this._renderEntityField("pm10_entity", "PM 10 Entity", "pm10", false)}
-          ${this._renderThresholdField("pm10_good", "Good (µg/m³)", 45)}
-          ${this._renderThresholdField("pm10_warning", "Warning (µg/m³)", 100)}
-          ${this._renderThresholdField("pm10_poor", "Poor (µg/m³)", 150)}
           ${this._renderCheckbox("show_pm10_graph", "Show Graph")}
         </div>
 
         <div class="section">
           <div class="section-title">VOC</div>
           ${this._renderEntityField("voc_entity", "VOC Entity", "volatile_organic_compounds", false)}
-          ${this._renderThresholdField("voc_good", "Good", 150)}
-          ${this._renderThresholdField("voc_warning", "Warning", 250)}
-          ${this._renderThresholdField("voc_poor", "Poor", 400)}
           ${this._renderCheckbox("show_voc_graph", "Show Graph")}
         </div>
       </div>
@@ -215,21 +200,6 @@ export class AirComfortCardEditor extends LitElement {
             @input=${this._valueChanged}
           />
         </div>
-      </div>
-    `;
-  }
-
-  private _renderThresholdField(id: string, label: string, defaultValue: number) {
-    return html`
-      <div class="option">
-        <label for=${id}>${label}</label>
-        <input
-          id=${id}
-          type="number"
-          .value=${String((this.config as any)?.[id] ?? defaultValue)}
-          placeholder=${String(defaultValue)}
-          @input=${this._valueChanged}
-        />
       </div>
     `;
   }

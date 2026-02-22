@@ -10,7 +10,7 @@ import "chartjs-adapter-date-fns";
 import { CardConfig, HomeAssistant, HistoryState, LovelaceCard } from "./types";
 import { cardStyles } from "./styles";
 import { calculateComfortZone, celsiusToFahrenheit, fahrenheitToCelsius } from "./comfort-zone";
-import { calculateAirQuality, SensorReading } from "./air-quality";
+import { calculateAirQuality, AQ_THRESHOLDS, SensorReading } from "./air-quality";
 import { dominantStatus } from "./status";
 import "./air-comfort-card-editor";
 
@@ -110,21 +110,6 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       temp_f_max: 75,
       humidity_min: 40,
       humidity_max: 60,
-      co2_good: 800,
-      co2_warning: 1200,
-      co2_poor: 1500,
-      no2_good: 50,
-      no2_warning: 150,
-      no2_poor: 250,
-      pm25_good: 15,
-      pm25_warning: 35,
-      pm25_poor: 75,
-      pm10_good: 45,
-      pm10_warning: 100,
-      pm10_poor: 150,
-      voc_good: 150,
-      voc_warning: 250,
-      voc_poor: 400,
       ...config
     };
   }
@@ -473,9 +458,9 @@ private getSensorDefs() {
         unit: entityUnit("co2_entity", "ppm"), history: this.co2History,
         show: config.show_co2_graph !== false && !!config.co2_entity,
         thresholds: collect(
-          thresh(config.co2_good, "rgba(100,220,100,0.5)", "Good"),
-          thresh(config.co2_warning, "rgba(255,180,50,0.5)", "Stuffy"),
-          thresh(config.co2_poor, "rgba(255,80,80,0.5)", "Poor"),
+          thresh(AQ_THRESHOLDS.co2.good, "rgba(100,220,100,0.5)", "Good"),
+          thresh(AQ_THRESHOLDS.co2.warning, "rgba(255,180,50,0.5)", "Stuffy"),
+          thresh(AQ_THRESHOLDS.co2.poor, "rgba(255,80,80,0.5)", "Poor"),
         ),
       },
       {
@@ -484,9 +469,9 @@ private getSensorDefs() {
         unit: entityUnit("no2_entity", ""), history: this.no2History,
         show: config.show_no2_graph !== false && !!config.no2_entity,
         thresholds: collect(
-          thresh(config.no2_good, "rgba(100,220,100,0.5)", "Good"),
-          thresh(config.no2_warning, "rgba(255,180,50,0.5)", "Warning"),
-          thresh(config.no2_poor, "rgba(255,80,80,0.5)", "Poor"),
+          thresh(AQ_THRESHOLDS.no2.good, "rgba(100,220,100,0.5)", "Good"),
+          thresh(AQ_THRESHOLDS.no2.warning, "rgba(255,180,50,0.5)", "Warning"),
+          thresh(AQ_THRESHOLDS.no2.poor, "rgba(255,80,80,0.5)", "Poor"),
         ),
       },
       {
@@ -495,9 +480,9 @@ private getSensorDefs() {
         unit: entityUnit("pm25_entity", "µg/m³"), history: this.pm25History,
         show: config.show_pm25_graph !== false && !!config.pm25_entity,
         thresholds: collect(
-          thresh(config.pm25_good, "rgba(100,220,100,0.5)", "Good"),
-          thresh(config.pm25_warning, "rgba(255,180,50,0.5)", "Warning"),
-          thresh(config.pm25_poor, "rgba(255,80,80,0.5)", "Poor"),
+          thresh(AQ_THRESHOLDS.pm25.good, "rgba(100,220,100,0.5)", "Good"),
+          thresh(AQ_THRESHOLDS.pm25.warning, "rgba(255,180,50,0.5)", "Warning"),
+          thresh(AQ_THRESHOLDS.pm25.poor, "rgba(255,80,80,0.5)", "Poor"),
         ),
       },
       {
@@ -506,9 +491,9 @@ private getSensorDefs() {
         unit: entityUnit("pm10_entity", "µg/m³"), history: this.pm10History,
         show: config.show_pm10_graph !== false && !!config.pm10_entity,
         thresholds: collect(
-          thresh(config.pm10_good, "rgba(100,220,100,0.5)", "Good"),
-          thresh(config.pm10_warning, "rgba(255,180,50,0.5)", "Warning"),
-          thresh(config.pm10_poor, "rgba(255,80,80,0.5)", "Poor"),
+          thresh(AQ_THRESHOLDS.pm10.good, "rgba(100,220,100,0.5)", "Good"),
+          thresh(AQ_THRESHOLDS.pm10.warning, "rgba(255,180,50,0.5)", "Warning"),
+          thresh(AQ_THRESHOLDS.pm10.poor, "rgba(255,80,80,0.5)", "Poor"),
         ),
       },
       {
@@ -517,9 +502,9 @@ private getSensorDefs() {
         unit: entityUnit("voc_entity", ""), history: this.vocHistory,
         show: config.show_voc_graph !== false && !!config.voc_entity,
         thresholds: collect(
-          thresh(config.voc_good, "rgba(100,220,100,0.5)", "Good"),
-          thresh(config.voc_warning, "rgba(255,180,50,0.5)", "Warning"),
-          thresh(config.voc_poor, "rgba(255,80,80,0.5)", "Poor"),
+          thresh(AQ_THRESHOLDS.voc.good, "rgba(100,220,100,0.5)", "Good"),
+          thresh(AQ_THRESHOLDS.voc.warning, "rgba(255,180,50,0.5)", "Warning"),
+          thresh(AQ_THRESHOLDS.voc.poor, "rgba(255,80,80,0.5)", "Poor"),
         ),
       },
     ];
@@ -751,22 +736,22 @@ private getSensorDefs() {
   private calculateAirQuality() {
     if (!this.config || !this.hass) return null;
 
-    const candidates = [
-      { entity: this.config.co2_entity,  good: this.config.co2_good,  warning: this.config.co2_warning  },
-      { entity: this.config.no2_entity,  good: this.config.no2_good,  warning: this.config.no2_warning  },
-      { entity: this.config.pm25_entity, good: this.config.pm25_good, warning: this.config.pm25_warning },
-      { entity: this.config.pm10_entity, good: this.config.pm10_good, warning: this.config.pm10_warning },
-      { entity: this.config.voc_entity,  good: this.config.voc_good,  warning: this.config.voc_warning  },
+    const sensors: { entity: string | undefined; thresholds: { good: number; warning: number } }[] = [
+      { entity: this.config.co2_entity,  thresholds: AQ_THRESHOLDS.co2  },
+      { entity: this.config.no2_entity,  thresholds: AQ_THRESHOLDS.no2  },
+      { entity: this.config.pm25_entity, thresholds: AQ_THRESHOLDS.pm25 },
+      { entity: this.config.pm10_entity, thresholds: AQ_THRESHOLDS.pm10 },
+      { entity: this.config.voc_entity,  thresholds: AQ_THRESHOLDS.voc  },
     ];
 
     const readings: SensorReading[] = [];
-    for (const { entity, good, warning } of candidates) {
-      if (!entity || good == null || warning == null) continue;
+    for (const { entity, thresholds } of sensors) {
+      if (!entity) continue;
       const state = this.hass.states[entity];
       if (!state) continue;
       const value = parseFloat(state.state);
       if (isNaN(value)) continue;
-      readings.push({ value, good, warning });
+      readings.push({ value, good: thresholds.good, warning: thresholds.warning });
     }
 
     return calculateAirQuality(readings);

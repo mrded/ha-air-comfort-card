@@ -14,28 +14,13 @@ export interface CardConfig {
   temp_f_max?: number;
   humidity_min?: number;
   humidity_max?: number;
-  co2_good?: number;
-  co2_warning?: number;
-  co2_poor?: number;
   no2_entity?: string;
-  no2_good?: number;
-  no2_warning?: number;
-  no2_poor?: number;
   show_no2_graph?: boolean;
   pm25_entity?: string;
-  pm25_good?: number;
-  pm25_warning?: number;
-  pm25_poor?: number;
   show_pm25_graph?: boolean;
   pm10_entity?: string;
-  pm10_good?: number;
-  pm10_warning?: number;
-  pm10_poor?: number;
   show_pm10_graph?: boolean;
   voc_entity?: string;
-  voc_good?: number;
-  voc_warning?: number;
-  voc_poor?: number;
   show_voc_graph?: boolean;
 }
 
