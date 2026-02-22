@@ -93,27 +93,11 @@ export class AirComfortCardEditor extends LitElement {
         </div>
 
         <div class="section">
-          <div class="section-title">CO₂</div>
+          <div class="section-title">Air Quality</div>
           ${this._renderEntityField("co2_entity", "CO₂ Entity", "carbon_dioxide", false)}
-        </div>
-
-        <div class="section">
-          <div class="section-title">NO₂</div>
           ${this._renderEntityField("no2_entity", "NO₂ Entity", "nitrogen_dioxide", false)}
-        </div>
-
-        <div class="section">
-          <div class="section-title">PM 2.5</div>
           ${this._renderEntityField("pm25_entity", "PM 2.5 Entity", "pm25", false)}
-        </div>
-
-        <div class="section">
-          <div class="section-title">PM 10</div>
           ${this._renderEntityField("pm10_entity", "PM 10 Entity", "pm10", false)}
-        </div>
-
-        <div class="section">
-          <div class="section-title">VOC</div>
           ${this._renderEntityField("voc_entity", "VOC Entity", "volatile_organic_compounds", false)}
         </div>
       </div>
