@@ -248,70 +248,37 @@ test.describe('temperature unit display', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 5. Graph visibility — show/hide individual charts via editor checkboxes
+// 5. Graph visibility — graphs appear when an entity is configured,
+//    disappear when the entity is removed. Temperature and humidity are
+//    always shown (required entities). AQ sensor graphs are optional.
 // ---------------------------------------------------------------------------
 test.describe('graph visibility', () => {
   const editor = (page: Page) => page.locator('#card-editor');
 
-  test('temperature graph is visible by default', async ({ page }) => {
+  test('all graphs visible when all entities are configured', async ({ page }) => {
     await expandHistory(page);
     await expect(card(page).locator('.chart-label', { hasText: 'Temperature (24h)' })).toBeVisible();
-  });
-
-  test('temperature graph disappears when disabled in the editor', async ({ page }) => {
-    await editor(page).locator('#show_temperature_graph').uncheck();
-    await expandHistory(page);
-    await expect(card(page).locator('.chart-label', { hasText: 'Temperature (24h)' })).toHaveCount(0);
-  });
-
-  test('humidity graph can be toggled off and back on', async ({ page }) => {
-    await expandHistory(page);
     await expect(card(page).locator('.chart-label', { hasText: 'Humidity (24h)' })).toBeVisible();
-
-    await editor(page).locator('#show_humidity_graph').uncheck();
-    await expect(card(page).locator('.chart-label', { hasText: 'Humidity (24h)' })).toHaveCount(0);
-
-    await editor(page).locator('#show_humidity_graph').check();
-    await expect(card(page).locator('.chart-label', { hasText: 'Humidity (24h)' })).toBeVisible();
+    await expect(card(page).locator('.chart-label', { hasText: 'CO₂ (24h)' })).toBeVisible();
+    await expect(card(page).locator('.chart-label', { hasText: 'NO₂ (24h)' })).toBeVisible();
+    await expect(card(page).locator('.chart-label', { hasText: 'PM 2.5 (24h)' })).toBeVisible();
+    await expect(card(page).locator('.chart-label', { hasText: 'PM 10 (24h)' })).toBeVisible();
+    await expect(card(page).locator('.chart-label', { hasText: 'VOC (24h)' })).toBeVisible();
   });
 
-  test('CO2 graph is visible by default and can be hidden', async ({ page }) => {
+  test('CO2 graph disappears when CO2 entity is removed', async ({ page }) => {
     await expandHistory(page);
     await expect(card(page).locator('.chart-label', { hasText: 'CO₂ (24h)' })).toBeVisible();
 
-    await editor(page).locator('#show_co2_graph').uncheck();
+    await editor(page).locator('#co2_entity').fill('');
+    await editor(page).locator('#co2_entity').dispatchEvent('input');
     await expect(card(page).locator('.chart-label', { hasText: 'CO₂ (24h)' })).toHaveCount(0);
   });
 
-  test('NO2 graph is visible by default and can be hidden', async ({ page }) => {
+  test('NO2 graph disappears when NO2 entity is removed', async ({ page }) => {
     await expandHistory(page);
-    await expect(card(page).locator('.chart-label', { hasText: 'NO₂ (24h)' })).toBeVisible();
-
-    await editor(page).locator('#show_no2_graph').uncheck();
+    await editor(page).locator('#no2_entity').fill('');
+    await editor(page).locator('#no2_entity').dispatchEvent('input');
     await expect(card(page).locator('.chart-label', { hasText: 'NO₂ (24h)' })).toHaveCount(0);
-  });
-
-  test('PM 2.5 graph is visible by default and can be hidden', async ({ page }) => {
-    await expandHistory(page);
-    await expect(card(page).locator('.chart-label', { hasText: 'PM 2.5 (24h)' })).toBeVisible();
-
-    await editor(page).locator('#show_pm25_graph').uncheck();
-    await expect(card(page).locator('.chart-label', { hasText: 'PM 2.5 (24h)' })).toHaveCount(0);
-  });
-
-  test('PM 10 graph is visible by default and can be hidden', async ({ page }) => {
-    await expandHistory(page);
-    await expect(card(page).locator('.chart-label', { hasText: 'PM 10 (24h)' })).toBeVisible();
-
-    await editor(page).locator('#show_pm10_graph').uncheck();
-    await expect(card(page).locator('.chart-label', { hasText: 'PM 10 (24h)' })).toHaveCount(0);
-  });
-
-  test('VOC graph is visible by default and can be hidden', async ({ page }) => {
-    await expandHistory(page);
-    await expect(card(page).locator('.chart-label', { hasText: 'VOC (24h)' })).toBeVisible();
-
-    await editor(page).locator('#show_voc_graph').uncheck();
-    await expect(card(page).locator('.chart-label', { hasText: 'VOC (24h)' })).toHaveCount(0);
   });
 });

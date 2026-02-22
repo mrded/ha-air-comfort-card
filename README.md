@@ -83,13 +83,6 @@ pm10_entity: sensor.living_room_pm10
 voc_entity: sensor.living_room_voc
 name: Living Room Comfort
 temperature_unit: C
-show_temperature_graph: true
-show_humidity_graph: true
-show_co2_graph: true
-show_no2_graph: true
-show_pm25_graph: true
-show_pm10_graph: true
-show_voc_graph: true
 temp_c_min: 20
 temp_c_max: 24
 temp_f_min: 68
@@ -112,13 +105,6 @@ humidity_max: 60
 | `voc_entity` | string | No | - | Entity ID of your VOC (Volatile Organic Compounds) sensor |
 | `name` | string | No | `Air Comfort` | Custom title for the card (editable via visual editor) |
 | `temperature_unit` | string | No | `C` | Temperature display unit: `C` for Celsius or `F` for Fahrenheit |
-| `show_temperature_graph` | boolean | No | `true` | Show/hide the 24-hour temperature graph |
-| `show_humidity_graph` | boolean | No | `true` | Show/hide the 24-hour humidity graph |
-| `show_co2_graph` | boolean | No | `true` | Show/hide the 24-hour CO2 graph |
-| `show_no2_graph` | boolean | No | `true` | Show/hide the 24-hour NO2 graph |
-| `show_pm25_graph` | boolean | No | `true` | Show/hide the 24-hour PM 2.5 graph |
-| `show_pm10_graph` | boolean | No | `true` | Show/hide the 24-hour PM 10 graph |
-| `show_voc_graph` | boolean | No | `true` | Show/hide the 24-hour VOC graph |
 | `temp_c_min` | number | No | `20` | Lower bound of comfortable temperature in Celsius |
 | `temp_c_max` | number | No | `24` | Upper bound of comfortable temperature in Celsius |
 | `temp_f_min` | number | No | `68` | Lower bound of comfortable temperature in Fahrenheit |

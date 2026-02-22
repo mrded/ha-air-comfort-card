@@ -84,44 +84,37 @@ export class AirComfortCardEditor extends LitElement {
           ${this._renderEntityField("temperature_entity", "Temperature Entity", "temperature")}
           ${this._renderTemperatureUnitSelector()}
           ${this._renderRangeField(tempMinField, tempMaxField, `Comfort Range (${tempUnitLabel})`, tempDefaultMin, tempDefaultMax)}
-          ${this._renderCheckbox("show_temperature_graph", "Show Graph")}
         </div>
 
         <div class="section">
           <div class="section-title">Humidity</div>
           ${this._renderEntityField("humidity_entity", "Humidity Entity", "humidity")}
           ${this._renderRangeField("humidity_min", "humidity_max", "Comfort Range (%)", 40, 60)}
-          ${this._renderCheckbox("show_humidity_graph", "Show Graph")}
         </div>
 
         <div class="section">
           <div class="section-title">CO₂</div>
           ${this._renderEntityField("co2_entity", "CO₂ Entity", "carbon_dioxide", false)}
-          ${this._renderCheckbox("show_co2_graph", "Show Graph")}
         </div>
 
         <div class="section">
           <div class="section-title">NO₂</div>
           ${this._renderEntityField("no2_entity", "NO₂ Entity", "nitrogen_dioxide", false)}
-          ${this._renderCheckbox("show_no2_graph", "Show Graph")}
         </div>
 
         <div class="section">
           <div class="section-title">PM 2.5</div>
           ${this._renderEntityField("pm25_entity", "PM 2.5 Entity", "pm25", false)}
-          ${this._renderCheckbox("show_pm25_graph", "Show Graph")}
         </div>
 
         <div class="section">
           <div class="section-title">PM 10</div>
           ${this._renderEntityField("pm10_entity", "PM 10 Entity", "pm10", false)}
-          ${this._renderCheckbox("show_pm10_graph", "Show Graph")}
         </div>
 
         <div class="section">
           <div class="section-title">VOC</div>
           ${this._renderEntityField("voc_entity", "VOC Entity", "volatile_organic_compounds", false)}
-          ${this._renderCheckbox("show_voc_graph", "Show Graph")}
         </div>
       </div>
     `;
@@ -163,20 +156,6 @@ export class AirComfortCardEditor extends LitElement {
     }
 
     return this._renderTextField(field, label, "sensor.example");
-  }
-
-  private _renderCheckbox(id: string, label: string) {
-    return html`
-      <div class="checkbox-option">
-        <input
-          id=${id}
-          type="checkbox"
-          .checked=${(this.config as any)?.[id] !== false}
-          @change=${this._valueChanged}
-        />
-        <label for=${id}>${label}</label>
-      </div>
-    `;
   }
 
   private _renderRangeField(minId: string, maxId: string, label: string, defaultMin: number, defaultMax: number) {

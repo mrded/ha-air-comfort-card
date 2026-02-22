@@ -5,9 +5,6 @@ export interface CardConfig {
   co2_entity?: string;
   name?: string;
   temperature_unit?: 'C' | 'F';
-  show_temperature_graph?: boolean;
-  show_humidity_graph?: boolean;
-  show_co2_graph?: boolean;
   temp_c_min?: number;
   temp_c_max?: number;
   temp_f_min?: number;
@@ -15,13 +12,9 @@ export interface CardConfig {
   humidity_min?: number;
   humidity_max?: number;
   no2_entity?: string;
-  show_no2_graph?: boolean;
   pm25_entity?: string;
-  show_pm25_graph?: boolean;
   pm10_entity?: string;
-  show_pm10_graph?: boolean;
   voc_entity?: string;
-  show_voc_graph?: boolean;
 }
 
 export interface EntityState {

@@ -53,34 +53,12 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       pm10_entity: "",
       voc_entity: "",
       temperature_unit: "C",
-      show_temperature_graph: true,
-      show_humidity_graph: true,
-      show_co2_graph: true,
-      show_no2_graph: true,
-      show_pm25_graph: true,
-      show_pm10_graph: true,
-      show_voc_graph: true,
       temp_c_min: 20,
       temp_c_max: 24,
       temp_f_min: 68,
       temp_f_max: 75,
       humidity_min: 40,
       humidity_max: 60,
-      co2_good: 800,
-      co2_warning: 1200,
-      co2_poor: 1500,
-      no2_good: 50,
-      no2_warning: 150,
-      no2_poor: 250,
-      pm25_good: 15,
-      pm25_warning: 35,
-      pm25_poor: 75,
-      pm10_good: 45,
-      pm10_warning: 100,
-      pm10_poor: 150,
-      voc_good: 150,
-      voc_warning: 250,
-      voc_poor: 400
     };
   }
 
@@ -97,13 +75,6 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     }
     this.config = {
       temperature_unit: "C",
-      show_temperature_graph: true,
-      show_humidity_graph: true,
-      show_co2_graph: true,
-      show_no2_graph: true,
-      show_pm25_graph: true,
-      show_pm10_graph: true,
-      show_voc_graph: true,
       temp_c_min: 20,
       temp_c_max: 24,
       temp_f_min: 68,
@@ -436,7 +407,7 @@ private getSensorDefs() {
         id: "temperature", canvasId: "temp-chart",
         label: "Temperature", color: "#ff6b6b",
         unit: displayTempUnit, history: tempHistory,
-        show: config.show_temperature_graph !== false,
+        show: true,
         thresholds: collect(
           thresh(tempMin, "rgba(100,150,255,0.5)", "Cold"),
           thresh(tempMax, "rgba(255,100,80,0.5)", "Hot"),
@@ -446,7 +417,7 @@ private getSensorDefs() {
         id: "humidity", canvasId: "humidity-chart",
         label: "Humidity", color: "#4dabf7",
         unit: entityUnit("humidity_entity", "%"), history: this.humidityHistory,
-        show: config.show_humidity_graph !== false,
+        show: true,
         thresholds: collect(
           thresh(config.humidity_min, "rgba(255,180,50,0.5)", "Dry"),
           thresh(config.humidity_max, "rgba(80,160,255,0.5)", "Wet"),
@@ -456,7 +427,7 @@ private getSensorDefs() {
         id: "co2", canvasId: "co2-chart",
         label: "CO₂", color: "#a9e34b",
         unit: entityUnit("co2_entity", "ppm"), history: this.co2History,
-        show: config.show_co2_graph !== false && !!config.co2_entity,
+        show: !!config.co2_entity,
         thresholds: collect(
           thresh(AQ_THRESHOLDS.co2.good, "rgba(100,220,100,0.5)", "Good"),
           thresh(AQ_THRESHOLDS.co2.warning, "rgba(255,180,50,0.5)", "Stuffy"),
@@ -467,7 +438,7 @@ private getSensorDefs() {
         id: "no2", canvasId: "no2-chart",
         label: "NO₂", color: "#ffa94d",
         unit: entityUnit("no2_entity", ""), history: this.no2History,
-        show: config.show_no2_graph !== false && !!config.no2_entity,
+        show: !!config.no2_entity,
         thresholds: collect(
           thresh(AQ_THRESHOLDS.no2.good, "rgba(100,220,100,0.5)", "Good"),
           thresh(AQ_THRESHOLDS.no2.warning, "rgba(255,180,50,0.5)", "Warning"),
@@ -478,7 +449,7 @@ private getSensorDefs() {
         id: "pm25", canvasId: "pm25-chart",
         label: "PM 2.5", color: "#da77f2",
         unit: entityUnit("pm25_entity", "µg/m³"), history: this.pm25History,
-        show: config.show_pm25_graph !== false && !!config.pm25_entity,
+        show: !!config.pm25_entity,
         thresholds: collect(
           thresh(AQ_THRESHOLDS.pm25.good, "rgba(100,220,100,0.5)", "Good"),
           thresh(AQ_THRESHOLDS.pm25.warning, "rgba(255,180,50,0.5)", "Warning"),
@@ -489,7 +460,7 @@ private getSensorDefs() {
         id: "pm10", canvasId: "pm10-chart",
         label: "PM 10", color: "#74c0fc",
         unit: entityUnit("pm10_entity", "µg/m³"), history: this.pm10History,
-        show: config.show_pm10_graph !== false && !!config.pm10_entity,
+        show: !!config.pm10_entity,
         thresholds: collect(
           thresh(AQ_THRESHOLDS.pm10.good, "rgba(100,220,100,0.5)", "Good"),
           thresh(AQ_THRESHOLDS.pm10.warning, "rgba(255,180,50,0.5)", "Warning"),
@@ -500,7 +471,7 @@ private getSensorDefs() {
         id: "voc", canvasId: "voc-chart",
         label: "VOC", color: "#20c997",
         unit: entityUnit("voc_entity", ""), history: this.vocHistory,
-        show: config.show_voc_graph !== false && !!config.voc_entity,
+        show: !!config.voc_entity,
         thresholds: collect(
           thresh(AQ_THRESHOLDS.voc.good, "rgba(100,220,100,0.5)", "Good"),
           thresh(AQ_THRESHOLDS.voc.warning, "rgba(255,180,50,0.5)", "Warning"),
