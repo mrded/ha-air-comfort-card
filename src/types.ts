@@ -57,6 +57,7 @@ export interface HomeAssistant {
   states: {
     [entity_id: string]: EntityState;
   };
+  language?: string;
   callService: (domain: string, service: string, data?: any) => Promise<void>;
   callApi: <T>(method: string, path: string) => Promise<T>;
 }

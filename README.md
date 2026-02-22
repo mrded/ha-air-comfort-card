@@ -14,6 +14,7 @@ A custom Home Assistant card that visualizes indoor air comfort using temperatur
 - 🌡️ **Temperature & Humidity Display**: Clear readings with customizable units
 - 🟢 **Air Quality Status**: Overall air quality message (Good / Moderate / Poor) derived from all configured air quality sensors, based on WHO 2021 and ASHRAE guidelines
 - 📊 **24-Hour History Charts**: Line graphs for temperature, humidity, CO2, NO2, PM 2.5, PM 10, and VOC
+- 🌍 **Multi-Language Support**: UI adapts to your Home Assistant language setting (English and German included; easily extensible)
 - 🎨 **Theme-Aware**: Automatically adapts to your Home Assistant theme
 - ⚙️ **Configurable**: Customize visibility of different elements via YAML
 - 🧹 **Clean & Intuitive**: Modern design inspired by thermostat apps
@@ -148,6 +149,33 @@ Thresholds are based on **WHO 2021 air quality guidelines** and **ASHRAE 62.1** 
 | PM 2.5 | ≤ 15 µg/m³ | ≤ 35 µg/m³ | > 35 µg/m³ |
 | PM 10 | ≤ 45 µg/m³ | ≤ 100 µg/m³ | > 100 µg/m³ |
 | VOC | ≤ 150 | ≤ 250 | > 250 |
+
+## Translations
+
+The card UI (status labels, dial labels, reading names, chart headings, and editor fields) automatically follows your Home Assistant language setting.
+
+**Supported languages:**
+
+| Code | Language |
+|------|----------|
+| `en` | English (default) |
+| `de` | German / Deutsch |
+
+Unsupported languages fall back to English.
+
+### Adding a new language
+
+1. Copy `src/translations/en.ts` to `src/translations/<code>.ts` (e.g. `fr.ts`).
+2. Translate every value in the new file. Keep all keys unchanged.
+3. Open `src/translations/index.ts` and add one import and one entry:
+
+```ts
+import { fr } from './fr';
+// …
+const TRANSLATIONS: Record<string, Translations> = { en, de, fr };
+```
+
+That's it — no other files need to change.
 
 ## Development
 

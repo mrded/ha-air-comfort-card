@@ -1,6 +1,11 @@
 import { AirQualityResult, AirQualityLevel } from './air-quality';
 import { thermalStatusLabel } from './comfort-zone';
 
+export interface StatusTranslations {
+  status: Record<string, string>;
+  airQuality: Record<string, string>;
+}
+
 /**
  * 0 = comfortable / clean
  * 1 = minor issue (single thermal deviation, or moderate air quality)
@@ -50,7 +55,8 @@ export function airQualitySeverity(level: AirQualityLevel): Severity {
  */
 export function dominantStatus(
   statusText: string,
-  aqResult: AirQualityResult | null
+  aqResult: AirQualityResult | null,
+  t?: StatusTranslations
 ): { label: string; severity: Severity } {
   const thermalSev = thermalSeverity(statusText);
   const aqSev = aqResult ? airQualitySeverity(aqResult.level) : 0;
@@ -58,8 +64,8 @@ export function dominantStatus(
 
   const aqWins = aqResult !== null && aqSev > 0 && aqSev >= thermalSev;
   const label = aqWins
-    ? AQ_LABELS[aqResult!.level]
-    : thermalStatusLabel(statusText);
+    ? (t?.airQuality[aqResult!.level] ?? AQ_LABELS[aqResult!.level])
+    : (t?.status[statusText] ?? thermalStatusLabel(statusText));
 
   return { label, severity };
 }
