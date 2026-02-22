@@ -136,7 +136,7 @@ The status reflects the worst sensor reading across all configured sensors:
 | Status | Indicator | Meaning |
 |--------|-----------|---------|
 | **Good** | 🟢 | All sensors within the good threshold |
-| **Moderate** | 🟠 | At least one sensor above the good threshold |
+| **Moderate** | 🟠 | At least one sensor above the good threshold but at or below the warning threshold |
 | **Poor** | 🔴 | At least one sensor above the warning threshold |
 
 Thresholds are based on **WHO 2021 air quality guidelines** and **ASHRAE 62.1** (VOC uses common IAQ guidelines):
