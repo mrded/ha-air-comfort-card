@@ -282,3 +282,31 @@ test.describe('graph visibility', () => {
     await expect(card(page).locator('.chart-label', { hasText: 'NO₂ (24h)' })).toHaveCount(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// 6. Alert sparkline — compact 1-hour chart shown in the card header when
+//    air quality is moderate or poor; hidden when AQ is good.
+// ---------------------------------------------------------------------------
+test.describe('alert sparkline', () => {
+  test('sparkline is hidden when AQ is good', async ({ page }) => {
+    await setSlider(page, 'co2', '450'); // well below the good threshold (800 ppm)
+    await expect(card(page).locator('.alert-sparkline')).toHaveCount(0);
+  });
+
+  test('sparkline is visible when AQ is moderate (CO2 between good and warning)', async ({ page }) => {
+    await setSlider(page, 'co2', '1000'); // moderate: 800 < 1000 ≤ 1200
+    await expect(card(page).locator('.alert-sparkline')).toBeVisible();
+  });
+
+  test('sparkline is visible when AQ is poor (CO2 above warning threshold)', async ({ page }) => {
+    await setSlider(page, 'co2', '1500'); // poor: > 1200 ppm
+    await expect(card(page).locator('.alert-sparkline')).toBeVisible();
+  });
+
+  test('sparkline disappears again when AQ returns to good', async ({ page }) => {
+    await setSlider(page, 'co2', '1500');
+    await expect(card(page).locator('.alert-sparkline')).toBeVisible();
+    await setSlider(page, 'co2', '450');
+    await expect(card(page).locator('.alert-sparkline')).toHaveCount(0);
+  });
+});

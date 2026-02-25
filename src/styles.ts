@@ -120,6 +120,24 @@ export const cardStyles = css`
     letter-spacing: 0.05em;
   }
 
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .alert-sparkline {
+    width: 80px;
+    height: 36px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .alert-sparkline canvas {
+    display: block;
+  }
+
   .severity-dot {
     width: 10px;
     height: 10px;

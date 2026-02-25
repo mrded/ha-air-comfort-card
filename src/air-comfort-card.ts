@@ -10,7 +10,7 @@ import "chartjs-adapter-date-fns";
 import { CardConfig, HomeAssistant, HistoryState, LovelaceCard, stripDeprecatedKeys } from "./types";
 import { cardStyles } from "./styles";
 import { calculateComfortZone, celsiusToFahrenheit, fahrenheitToCelsius } from "./comfort-zone";
-import { calculateAirQuality, AQ_THRESHOLDS, SensorReading } from "./air-quality";
+import { calculateAirQuality, classifyReading, AQ_THRESHOLDS, SensorReading } from "./air-quality";
 import { dominantStatus } from "./status";
 import { getTranslations } from "./translations";
 import "./air-comfort-card-editor";
@@ -38,6 +38,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 
   private resizeObserver?: ResizeObserver;
   private charts = new Map<string, Chart>();
+  private alertChart?: Chart;
   private historyFetchInterval?: number;
   private lastHistoryFetch = 0;
 
@@ -116,6 +117,8 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       clearInterval(this.historyFetchInterval);
     }
     this.destroyCharts();
+    this.alertChart?.destroy();
+    this.alertChart = undefined;
     super.disconnectedCallback();
   }
 
@@ -144,6 +147,19 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       }
       this.updateCharts();
     }
+
+    const alertDataChanged =
+      changedProperties.has("hass") ||
+      changedProperties.has("co2History") ||
+      changedProperties.has("no2History") ||
+      changedProperties.has("pm25History") ||
+      changedProperties.has("pm10History") ||
+      changedProperties.has("vocHistory") ||
+      changedProperties.has("config");
+
+    if (alertDataChanged) {
+      this.updateAlertChart();
+    }
   }
 
   private destroyCharts(): void {
@@ -151,6 +167,104 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       chart.destroy();
     }
     this.charts.clear();
+  }
+
+  private getWorstAqSensorDef(): { history: ChartDataPoint[]; color: string } | null {
+    if (!this.config || !this.hass) return null;
+
+    const defs = [
+      { entity: this.config.co2_entity,  history: this.co2History,  thresholds: AQ_THRESHOLDS.co2,  color: '#a9e34b' },
+      { entity: this.config.no2_entity,  history: this.no2History,  thresholds: AQ_THRESHOLDS.no2,  color: '#ffa94d' },
+      { entity: this.config.pm25_entity, history: this.pm25History, thresholds: AQ_THRESHOLDS.pm25, color: '#da77f2' },
+      { entity: this.config.pm10_entity, history: this.pm10History, thresholds: AQ_THRESHOLDS.pm10, color: '#74c0fc' },
+      { entity: this.config.voc_entity,  history: this.vocHistory,  thresholds: AQ_THRESHOLDS.voc,  color: '#20c997' },
+    ];
+
+    let worstRank = 0;
+    let worstDef: typeof defs[0] | null = null;
+
+    for (const def of defs) {
+      if (!def.entity) continue;
+      const state = this.hass.states[def.entity];
+      if (!state) continue;
+      const value = parseFloat(state.state);
+      if (isNaN(value)) continue;
+      const level = classifyReading({ value, good: def.thresholds.good, warning: def.thresholds.warning });
+      const rank = level === 'poor' ? 2 : level === 'moderate' ? 1 : 0;
+      if (rank > worstRank) {
+        worstRank = rank;
+        worstDef = def;
+      }
+    }
+
+    return worstRank > 0 ? worstDef : null;
+  }
+
+  private updateAlertChart(): void {
+    const canvas = this.shadowRoot?.getElementById('alert-chart') as HTMLCanvasElement | null;
+
+    if (!canvas) {
+      this.alertChart?.destroy();
+      this.alertChart = undefined;
+      return;
+    }
+
+    const worstDef = this.getWorstAqSensorDef();
+    if (!worstDef) {
+      this.alertChart?.destroy();
+      this.alertChart = undefined;
+      return;
+    }
+
+    // Show the last 1 hour of data up to the most recent reading.
+    // Using maxTime rather than Date.now() as the reference point means
+    // the sparkline also works correctly with static/demo history data.
+    const maxTime = worstDef.history.reduce((m, p) => Math.max(m, p.time.getTime()), 0);
+    const cutoff = maxTime - 60 * 60 * 1000;
+    const lastHourData = worstDef.history.filter(p => p.time.getTime() >= cutoff);
+
+    if (lastHourData.length === 0) {
+      this.alertChart?.destroy();
+      this.alertChart = undefined;
+      return;
+    }
+
+    const datasetPoints: ScatterDataPoint[] = lastHourData.map(p => ({ x: p.time.getTime(), y: p.value }));
+
+    const sparklineConfig: ChartConfiguration = {
+      type: 'line',
+      data: {
+        datasets: [{
+          data: datasetPoints,
+          borderColor: worstDef.color,
+          backgroundColor: worstDef.color + '33',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          borderWidth: 1.5,
+        }],
+      },
+      options: {
+        responsive: false,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false },
+        },
+        scales: {
+          x: { display: false, type: 'time' },
+          y: { display: false },
+        },
+      },
+    };
+
+    if (this.alertChart) {
+      this.alertChart.data = sparklineConfig.data;
+      this.alertChart.update('none');
+    } else {
+      this.alertChart = new Chart(canvas, sparklineConfig);
+    }
   }
 
   private async fetchHistory(): Promise<void> {
@@ -650,9 +764,16 @@ private getSensorDefs() {
       <div class="card-content">
         <div class="card-header">
           <div class="card-title">${this.config.name || t.card.title}</div>
-          <div class="status-badge">
-            <span class="severity-dot severity-${severity}"></span>
-            ${statusLabel}
+          <div class="header-right">
+            <div class="status-badge">
+              <span class="severity-dot severity-${severity}"></span>
+              ${statusLabel}
+            </div>
+            ${aqStatus && aqStatus.level !== 'good' ? html`
+              <div class="alert-sparkline">
+                <canvas id="alert-chart" width="80" height="36"></canvas>
+              </div>
+            ` : ''}
           </div>
         </div>
 

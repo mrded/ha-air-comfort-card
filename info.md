@@ -9,6 +9,7 @@ A custom Home Assistant card that visualizes indoor air comfort using temperatur
 - Circular comfort dial with color-coded zones and a moving indicator dot
 - Temperature and humidity readings with Celsius/Fahrenheit toggle
 - Air quality status (Good / Moderate / Poor) based on WHO 2021 and ASHRAE guidelines
+- Compact 1-hour sparkline for the worst-performing sensor when air quality is Moderate or Poor
 - 24-hour history charts for temperature, humidity, CO2, NO2, PM 2.5, PM 10, and VOC
 - Multi-language UI — adapts to your Home Assistant language (English and German included)
 - Configurable comfort thresholds
