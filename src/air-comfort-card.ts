@@ -254,10 +254,10 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 
     const datasetPoints: ScatterDataPoint[] = lastHourData.map(p => ({ x: p.time.getTime(), y: p.value }));
 
-    const { color, currentValue, warningThreshold, unit } = worstDef;
+    const { color, warningThreshold, unit } = worstDef;
 
-    // Inline Chart.js plugin: draws a dashed warning threshold line and
-    // overlays the current reading value in the top-right corner.
+    // Inline Chart.js plugin: draws a threshold line matching the style of the
+    // main history charts ([6,4] dash, label above the line).
     const overlayPlugin = {
       id: 'alertSparklineOverlay',
       afterDatasetsDraw(chart: Chart) {
@@ -269,28 +269,28 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 
         ctx.save();
 
-        // Dashed threshold line
+        // Dashed threshold line (matches main chart style)
         if (warningThreshold >= yMin && warningThreshold <= yMax) {
           const y = yScale.getPixelForValue(warningThreshold);
-          ctx.setLineDash([3, 3]);
+          ctx.setLineDash([6, 4]);
           ctx.lineWidth = 1;
           ctx.strokeStyle = 'rgba(255, 180, 50, 0.7)';
           ctx.beginPath();
           ctx.moveTo(chartArea.left, y);
           ctx.lineTo(chartArea.right, y);
           ctx.stroke();
-        }
 
-        // Current reading value — top-right corner of the chart area
-        const valueText = Number.isInteger(currentValue)
-          ? `${currentValue}${unit}`
-          : `${currentValue.toFixed(1)}${unit}`;
-        ctx.setLineDash([]);
-        ctx.font = 'bold 9px sans-serif';
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = color;
-        ctx.fillText(valueText, chartArea.right - 2, chartArea.top + 2);
+          // Threshold value label above the line (right-aligned, like main charts)
+          ctx.setLineDash([]);
+          ctx.font = '9px sans-serif';
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'bottom';
+          ctx.fillStyle = 'rgba(255, 180, 50, 0.7)';
+          const thresholdLabel = Number.isInteger(warningThreshold)
+            ? `${warningThreshold}${unit}`
+            : `${warningThreshold.toFixed(1)}${unit}`;
+          ctx.fillText(thresholdLabel, chartArea.right - 2, y - 1);
+        }
 
         ctx.restore();
       },
@@ -320,7 +320,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
         },
         scales: {
           x: { display: false, type: 'time' },
-          y: { display: false },
+          y: { display: false, suggestedMin: warningThreshold * 0.95 },
         },
       },
     };
