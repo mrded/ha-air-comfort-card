@@ -10,7 +10,7 @@ import "chartjs-adapter-date-fns";
 import { CardConfig, HomeAssistant, HistoryState, LovelaceCard, stripDeprecatedKeys } from "./types";
 import { cardStyles } from "./styles";
 import { calculateComfortZone, celsiusToFahrenheit, fahrenheitToCelsius } from "./comfort-zone";
-import { calculateAirQuality, AQ_THRESHOLDS, SensorReading } from "./air-quality";
+import { calculateAirQuality, classifyReading, AQ_THRESHOLDS, SensorReading } from "./air-quality";
 import { dominantStatus } from "./status";
 import { getTranslations } from "./translations";
 import "./air-comfort-card-editor";
@@ -38,6 +38,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
 
   private resizeObserver?: ResizeObserver;
   private charts = new Map<string, Chart>();
+  private alertChart?: Chart;
   private historyFetchInterval?: number;
   private lastHistoryFetch = 0;
 
@@ -116,6 +117,8 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       clearInterval(this.historyFetchInterval);
     }
     this.destroyCharts();
+    this.alertChart?.destroy();
+    this.alertChart = undefined;
     super.disconnectedCallback();
   }
 
@@ -144,6 +147,19 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       }
       this.updateCharts();
     }
+
+    const alertDataChanged =
+      changedProperties.has("hass") ||
+      changedProperties.has("co2History") ||
+      changedProperties.has("no2History") ||
+      changedProperties.has("pm25History") ||
+      changedProperties.has("pm10History") ||
+      changedProperties.has("vocHistory") ||
+      changedProperties.has("config");
+
+    if (alertDataChanged) {
+      this.updateAlertChart();
+    }
   }
 
   private destroyCharts(): void {
@@ -151,6 +167,169 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       chart.destroy();
     }
     this.charts.clear();
+  }
+
+  private getWorstAqSensorDef(): {
+    history: ChartDataPoint[];
+    color: string;
+    label: string;
+    unit: string;
+    currentValue: number;
+    warningThreshold: number;
+  } | null {
+    if (!this.config || !this.hass) return null;
+
+    const tr = getTranslations(this.hass.language);
+
+    const entityUnit = (entityId: string | undefined, fallback: string): string =>
+      (entityId && this.hass?.states[entityId]?.attributes.unit_of_measurement) || fallback;
+
+    const defs = [
+      { entity: this.config.co2_entity,  history: this.co2History,  thresholds: AQ_THRESHOLDS.co2,  color: '#a9e34b', label: tr.sensors.co2,  unit: entityUnit(this.config.co2_entity,  'ppm')    },
+      { entity: this.config.no2_entity,  history: this.no2History,  thresholds: AQ_THRESHOLDS.no2,  color: '#ffa94d', label: tr.sensors.no2,  unit: entityUnit(this.config.no2_entity,  '')       },
+      { entity: this.config.pm25_entity, history: this.pm25History, thresholds: AQ_THRESHOLDS.pm25, color: '#da77f2', label: tr.sensors.pm25, unit: entityUnit(this.config.pm25_entity, 'µg/m³')  },
+      { entity: this.config.pm10_entity, history: this.pm10History, thresholds: AQ_THRESHOLDS.pm10, color: '#74c0fc', label: tr.sensors.pm10, unit: entityUnit(this.config.pm10_entity, 'µg/m³')  },
+      { entity: this.config.voc_entity,  history: this.vocHistory,  thresholds: AQ_THRESHOLDS.voc,  color: '#20c997', label: tr.sensors.voc,  unit: entityUnit(this.config.voc_entity,  '')       },
+    ];
+
+    let worstRank = 0;
+    let worstDef: typeof defs[0] | null = null;
+    let worstValue = 0;
+
+    for (const def of defs) {
+      if (!def.entity) continue;
+      const state = this.hass.states[def.entity];
+      if (!state) continue;
+      const value = parseFloat(state.state);
+      if (isNaN(value)) continue;
+      const level = classifyReading({ value, good: def.thresholds.good, warning: def.thresholds.warning });
+      const rank = level === 'poor' ? 2 : level === 'moderate' ? 1 : 0;
+      if (rank > worstRank) {
+        worstRank = rank;
+        worstDef = def;
+        worstValue = value;
+      }
+    }
+
+    if (worstRank === 0 || !worstDef) return null;
+
+    return {
+      history: worstDef.history,
+      color: worstDef.color,
+      label: worstDef.label,
+      unit: worstDef.unit,
+      currentValue: worstValue,
+      warningThreshold: worstDef.thresholds.warning,
+    };
+  }
+
+  private updateAlertChart(): void {
+    const canvas = this.shadowRoot?.getElementById('alert-chart') as HTMLCanvasElement | null;
+
+    if (!canvas) {
+      this.alertChart?.destroy();
+      this.alertChart = undefined;
+      return;
+    }
+
+    const worstDef = this.getWorstAqSensorDef();
+    if (!worstDef) {
+      this.alertChart?.destroy();
+      this.alertChart = undefined;
+      return;
+    }
+
+    // Show the last 1 hour of data up to the most recent reading.
+    // Using maxTime rather than Date.now() as the reference point means
+    // the sparkline also works correctly with static/demo history data.
+    const maxTime = worstDef.history.reduce((m, p) => Math.max(m, p.time.getTime()), 0);
+    const cutoff = maxTime - 60 * 60 * 1000;
+    const lastHourData = worstDef.history.filter(p => p.time.getTime() >= cutoff);
+
+    if (lastHourData.length === 0) {
+      this.alertChart?.destroy();
+      this.alertChart = undefined;
+      return;
+    }
+
+    const datasetPoints: ScatterDataPoint[] = lastHourData.map(p => ({ x: p.time.getTime(), y: p.value }));
+
+    const { color, warningThreshold, unit } = worstDef;
+
+    // Inline Chart.js plugin: draws a threshold line matching the style of the
+    // main history charts ([6,4] dash, label above the line).
+    const overlayPlugin = {
+      id: 'alertSparklineOverlay',
+      afterDatasetsDraw(chart: Chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea || !scales.y) return;
+        const yScale = scales.y;
+        const yMin = yScale.min as number;
+        const yMax = yScale.max as number;
+
+        ctx.save();
+
+        // Dashed threshold line (matches main chart style)
+        if (warningThreshold >= yMin && warningThreshold <= yMax) {
+          const y = yScale.getPixelForValue(warningThreshold);
+          ctx.setLineDash([6, 4]);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(255, 180, 50, 0.7)';
+          ctx.beginPath();
+          ctx.moveTo(chartArea.left, y);
+          ctx.lineTo(chartArea.right, y);
+          ctx.stroke();
+
+          // Threshold value label above the line (right-aligned, like main charts)
+          ctx.setLineDash([]);
+          ctx.font = '9px sans-serif';
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'bottom';
+          ctx.fillStyle = 'rgba(255, 180, 50, 0.7)';
+          const thresholdLabel = Number.isInteger(warningThreshold)
+            ? `${warningThreshold}${unit}`
+            : `${warningThreshold.toFixed(1)}${unit}`;
+          ctx.fillText(thresholdLabel, chartArea.right - 2, y - 1);
+        }
+
+        ctx.restore();
+      },
+    };
+
+    const sparklineConfig: ChartConfiguration = {
+      type: 'line',
+      data: {
+        datasets: [{
+          data: datasetPoints,
+          borderColor: color,
+          backgroundColor: color + '33',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          borderWidth: 1.5,
+        }],
+      },
+      plugins: [overlayPlugin],
+      options: {
+        responsive: false,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false },
+        },
+        scales: {
+          x: { display: false, type: 'time' },
+          y: { display: false, suggestedMin: warningThreshold * 0.95 },
+        },
+      },
+    };
+
+    if (this.alertChart) {
+      this.alertChart.destroy();
+      this.alertChart = undefined;
+    }
+    this.alertChart = new Chart(canvas, sparklineConfig);
   }
 
   private async fetchHistory(): Promise<void> {
@@ -645,14 +824,30 @@ private getSensorDefs() {
     const showWarning = !isInComfortZone;
     const aqStatus = this.calculateAirQuality();
     const { label: statusLabel, severity } = dominantStatus(statusText, aqStatus, t);
+    const worstAq = aqStatus && aqStatus.level !== 'good' ? this.getWorstAqSensorDef() : null;
 
     return html`
       <div class="card-content">
         <div class="card-header">
           <div class="card-title">${this.config.name || t.card.title}</div>
-          <div class="status-badge">
-            <span class="severity-dot severity-${severity}"></span>
-            ${statusLabel}
+          <div class="header-right">
+            <div class="status-badge">
+              <span class="severity-dot severity-${severity}"></span>
+              ${statusLabel}
+            </div>
+            ${worstAq ? html`
+              <div class="alert-sparkline">
+                <div class="alert-sparkline-label">
+                  <span class="alert-sparkline-name">${worstAq.label}</span>
+                  <span class="alert-sparkline-value" style="color: ${worstAq.color}">
+                    ${Number.isInteger(worstAq.currentValue)
+                      ? worstAq.currentValue
+                      : worstAq.currentValue.toFixed(1)}${worstAq.unit}
+                  </span>
+                </div>
+                <canvas id="alert-chart" width="96" height="36"></canvas>
+              </div>
+            ` : ''}
           </div>
         </div>
 

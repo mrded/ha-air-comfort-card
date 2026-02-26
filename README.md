@@ -132,6 +132,8 @@ The moving dot indicator shows your current conditions relative to these zones, 
 
 When one or more air quality sensors are configured (CO2, NO2, PM 2.5, PM 10, VOC), the card displays an overall **Air quality** message below the temperature and humidity readings.
 
+When air quality is **Moderate** or **Poor**, a compact 1-hour sparkline chart for the worst-performing sensor automatically appears in the top-right corner of the card, beneath the status label. The sparkline disappears as soon as all sensors return to the **Good** range.
+
 The status reflects the worst sensor reading across all configured sensors:
 
 | Status | Indicator | Meaning |

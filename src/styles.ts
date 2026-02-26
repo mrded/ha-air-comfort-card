@@ -120,6 +120,49 @@ export const cardStyles = css`
     letter-spacing: 0.05em;
   }
 
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .alert-sparkline {
+    width: 96px;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .alert-sparkline-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .alert-sparkline-name {
+    font-size: 0.6em;
+    color: var(--secondary-text-color, rgba(255,255,255,0.6));
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  .alert-sparkline-value {
+    font-size: 0.7em;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .alert-sparkline canvas {
+    display: block;
+    width: 96px !important;
+    height: 36px !important;
+  }
+
   .severity-dot {
     width: 10px;
     height: 10px;
