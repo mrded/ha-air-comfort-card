@@ -1,12 +1,5 @@
-import { LitElement, html, PropertyValues } from "lit";
+import { LitElement, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import {
-  Chart,
-  ChartConfiguration,
-  registerables,
-  ScatterDataPoint
-} from "chart.js";
-import "chartjs-adapter-date-fns";
 import { CardConfig, HomeAssistant, HistoryState, LovelaceCard, stripDeprecatedKeys } from "./types";
 import { cardStyles } from "./styles";
 import { calculateComfortZone, celsiusToFahrenheit, fahrenheitToCelsius } from "./comfort-zone";
@@ -14,32 +7,26 @@ import { calculateAirQuality, AQ_THRESHOLDS, SensorReading } from "./air-quality
 import { dominantStatus } from "./status";
 import { getTranslations } from "./translations";
 import "./air-comfort-card-editor";
-
-Chart.register(...registerables);
-
-interface ChartDataPoint {
-  time: Date;
-  value: number;
-}
+import { SvgChartPoint, SvgChartThreshold } from "./svg-chart";
+import "./svg-chart";
 
 @customElement("air-comfort-card")
 export class AirComfortCard extends LitElement implements LovelaceCard {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private config?: CardConfig;
   @state() private dialSize = 280;
-  @state() private temperatureHistory: ChartDataPoint[] = [];
-  @state() private humidityHistory: ChartDataPoint[] = [];
-  @state() private co2History: ChartDataPoint[] = [];
-  @state() private no2History: ChartDataPoint[] = [];
-  @state() private pm1History: ChartDataPoint[] = [];
-  @state() private pm25History: ChartDataPoint[] = [];
-  @state() private pm10History: ChartDataPoint[] = [];
-  @state() private radonHistory: ChartDataPoint[] = [];
-  @state() private vocHistory: ChartDataPoint[] = [];
+  @state() private temperatureHistory: SvgChartPoint[] = [];
+  @state() private humidityHistory: SvgChartPoint[] = [];
+  @state() private co2History: SvgChartPoint[] = [];
+  @state() private no2History: SvgChartPoint[] = [];
+  @state() private pm1History: SvgChartPoint[] = [];
+  @state() private pm25History: SvgChartPoint[] = [];
+  @state() private pm10History: SvgChartPoint[] = [];
+  @state() private radonHistory: SvgChartPoint[] = [];
+  @state() private vocHistory: SvgChartPoint[] = [];
   @state() private historyExpanded = false;
 
   private resizeObserver?: ResizeObserver;
-  private charts = new Map<string, Chart>();
   private historyFetchInterval?: number;
   private lastHistoryFetch = 0;
 
@@ -119,44 +106,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     if (this.historyFetchInterval) {
       clearInterval(this.historyFetchInterval);
     }
-    this.destroyCharts();
     super.disconnectedCallback();
-  }
-
-  protected updated(changedProperties: PropertyValues): void {
-    super.updated(changedProperties);
-    const chartDataChanged =
-      changedProperties.has("temperatureHistory") ||
-      changedProperties.has("humidityHistory") ||
-      changedProperties.has("co2History") ||
-      changedProperties.has("no2History") ||
-      changedProperties.has("pm1History") ||
-      changedProperties.has("pm25History") ||
-      changedProperties.has("pm10History") ||
-      changedProperties.has("radonHistory") ||
-      changedProperties.has("vocHistory") ||
-      changedProperties.has("config");
-
-    if (changedProperties.has("historyExpanded")) {
-      if (this.historyExpanded) {
-        this.updateCharts();
-      } else {
-        this.destroyCharts();
-      }
-    } else if (this.historyExpanded && chartDataChanged) {
-      // Recreate charts when config changes so threshold lines update
-      if (changedProperties.has("config")) {
-        this.destroyCharts();
-      }
-      this.updateCharts();
-    }
-  }
-
-  private destroyCharts(): void {
-    for (const chart of this.charts.values()) {
-      chart.destroy();
-    }
-    this.charts.clear();
   }
 
   private async fetchHistory(): Promise<void> {
@@ -210,7 +160,7 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
       for (const entityHistory of history) {
         if (entityHistory.length === 0) continue;
 
-        const points: ChartDataPoint[] = entityHistory
+        const points: SvgChartPoint[] = entityHistory
           .filter(s => !isNaN(parseFloat(s.state)))
           .map(s => ({
             time: new Date(s.last_changed),
@@ -244,164 +194,16 @@ export class AirComfortCard extends LitElement implements LovelaceCard {
     }
   }
 
-  private getChartConfig(
-    data: ChartDataPoint[],
-    label: string,
-    color: string,
-    unit: string,
-    thresholds?: { value: number; color: string; label?: string }[]
-  ): ChartConfiguration {
-    const datasetPoints: ScatterDataPoint[] = data.map(point => ({
-      x: point.time.getTime(),
-      y: point.value
-    }));
-
-    const plugins: ChartConfiguration["plugins"] = [];
-    if (thresholds && thresholds.length > 0) {
-      plugins.push({
-        id: "thresholdLines",
-        afterDatasetsDraw(chart: Chart) {
-          const { ctx, chartArea, scales } = chart;
-          const yScale = scales.y;
-          if (!yScale || !chartArea) return;
-
-          ctx.save();
-
-          for (const threshold of thresholds) {
-            const yMin = yScale.min as number;
-            const yMax = yScale.max as number;
-            if (threshold.value < yMin || threshold.value > yMax) continue;
-            const y = yScale.getPixelForValue(threshold.value);
-
-            ctx.setLineDash([6, 4]);
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = threshold.color;
-            ctx.beginPath();
-            ctx.moveTo(chartArea.left, y);
-            ctx.lineTo(chartArea.right, y);
-            ctx.stroke();
-
-            if (threshold.label) {
-              ctx.setLineDash([]);
-              ctx.font = "10px sans-serif";
-              ctx.fillStyle = threshold.color;
-              ctx.textAlign = "right";
-              ctx.fillText(
-                threshold.label,
-                chartArea.right - 4,
-                y - 4
-              );
-            }
-          }
-
-          ctx.restore();
-        }
-      });
-    }
-
-    return {
-      type: "line",
-      data: {
-        datasets: [
-          {
-            label,
-            data: datasetPoints,
-            borderColor: color,
-            backgroundColor: color + "33",
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0,
-            borderWidth: 2
-          }
-        ]
-      },
-      plugins,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          intersect: false,
-          mode: "index"
-        },
-        plugins: {
-          legend: {
-            display: false
-          },
-          tooltip: {
-            callbacks: {
-              title: tooltipItems => {
-                const tooltipItem = tooltipItems[0];
-                if (!tooltipItem) {
-                  return "";
-                }
-                const parsedX = tooltipItem.parsed.x;
-                const timestamp =
-                  typeof parsedX === "number"
-                    ? parsedX
-                    : typeof (tooltipItem.raw as { x?: number })?.x ===
-                      "number"
-                    ? (tooltipItem.raw as { x: number }).x
-                    : undefined;
-                if (typeof timestamp !== "number") {
-                  return "";
-                }
-                const date = new Date(timestamp);
-                if (Number.isNaN(date.getTime())) {
-                  return "";
-                }
-                return date.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit"
-                });
-              },
-              label: context => {
-                return `${context.parsed.y?.toFixed(1) ?? ""}${unit}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            type: "time",
-            time: {
-              unit: "hour",
-              displayFormats: {
-                hour: "HH:mm"
-              }
-            },
-            grid: {
-              color: "rgba(255,255,255,0.1)"
-            },
-            ticks: {
-              color: "rgba(255,255,255,0.6)",
-              maxTicksLimit: 6
-            }
-          },
-          y: {
-            grid: {
-              color: "rgba(255,255,255,0.1)"
-            },
-            ticks: {
-              color: "rgba(255,255,255,0.6)",
-              callback: value => `${Math.round(Number(value))}${unit}`
-            }
-          }
-        }
-      }
-    };
-  }
-
-private getSensorDefs() {
+  private getSensorDefs() {
     const config = this.config;
     if (!config) return [];
 
     const tr = getTranslations(this.hass?.language);
 
-    type Threshold = { value: number; color: string; label: string };
-    const thresh = (value: number | undefined, color: string, label: string): Threshold | null =>
+    const thresh = (value: number | undefined, color: string, label: string): SvgChartThreshold | null =>
       value != null ? { value, color, label } : null;
-    const collect = (...items: (Threshold | null)[]): Threshold[] =>
-      items.filter((t): t is Threshold => t !== null);
+    const collect = (...items: (SvgChartThreshold | null)[]): SvgChartThreshold[] =>
+      items.filter((t): t is SvgChartThreshold => t !== null);
 
     const entityUnit = (entityKey: keyof CardConfig, fallback: string): string => {
       const id = config[entityKey] as string | undefined;
@@ -423,7 +225,7 @@ private getSensorDefs() {
 
     return [
       {
-        id: "temperature", canvasId: "temp-chart",
+        id: "temperature",
         label: tr.sensors.temperature, color: "#ff6b6b",
         unit: displayTempUnit, history: tempHistory,
         show: true,
@@ -433,7 +235,7 @@ private getSensorDefs() {
         ),
       },
       {
-        id: "humidity", canvasId: "humidity-chart",
+        id: "humidity",
         label: tr.sensors.humidity, color: "#4dabf7",
         unit: entityUnit("humidity_entity", "%"), history: this.humidityHistory,
         show: true,
@@ -443,7 +245,7 @@ private getSensorDefs() {
         ),
       },
       {
-        id: "co2", canvasId: "co2-chart",
+        id: "co2",
         label: tr.sensors.co2, color: "#a9e34b",
         unit: entityUnit("co2_entity", "ppm"), history: this.co2History,
         show: !!config.co2_entity,
@@ -454,7 +256,7 @@ private getSensorDefs() {
         ),
       },
       {
-        id: "no2", canvasId: "no2-chart",
+        id: "no2",
         label: tr.sensors.no2, color: "#ffa94d",
         unit: entityUnit("no2_entity", ""), history: this.no2History,
         show: !!config.no2_entity,
@@ -465,7 +267,7 @@ private getSensorDefs() {
         ),
       },
       {
-        id: "pm1", canvasId: "pm1-chart",
+        id: "pm1",
         label: tr.sensors.pm1, color: "#e599f7",
         unit: entityUnit("pm1_entity", "µg/m³"), history: this.pm1History,
         show: !!config.pm1_entity,
@@ -476,7 +278,7 @@ private getSensorDefs() {
         ),
       },
       {
-        id: "pm25", canvasId: "pm25-chart",
+        id: "pm25",
         label: tr.sensors.pm25, color: "#da77f2",
         unit: entityUnit("pm25_entity", "µg/m³"), history: this.pm25History,
         show: !!config.pm25_entity,
@@ -487,7 +289,7 @@ private getSensorDefs() {
         ),
       },
       {
-        id: "pm10", canvasId: "pm10-chart",
+        id: "pm10",
         label: tr.sensors.pm10, color: "#74c0fc",
         unit: entityUnit("pm10_entity", "µg/m³"), history: this.pm10History,
         show: !!config.pm10_entity,
@@ -498,7 +300,7 @@ private getSensorDefs() {
         ),
       },
       {
-        id: "radon", canvasId: "radon-chart",
+        id: "radon",
         label: tr.sensors.radon, color: "#63e6be",
         unit: entityUnit("radon_entity", "Bq/m³"), history: this.radonHistory,
         show: !!config.radon_entity,
@@ -509,7 +311,7 @@ private getSensorDefs() {
         ),
       },
       {
-        id: "voc", canvasId: "voc-chart",
+        id: "voc",
         label: tr.sensors.voc, color: "#20c997",
         unit: entityUnit("voc_entity", ""), history: this.vocHistory,
         show: !!config.voc_entity,
@@ -520,29 +322,6 @@ private getSensorDefs() {
         ),
       },
     ];
-  }
-
-  private updateCharts(): void {
-    for (const def of this.getSensorDefs()) {
-      const canvas = this.shadowRoot?.getElementById(def.canvasId) as HTMLCanvasElement | null;
-
-      if (!canvas) {
-        this.charts.get(def.id)?.destroy();
-        this.charts.delete(def.id);
-        continue;
-      }
-
-      if (def.history.length === 0) continue;
-
-      const chartConfig = this.getChartConfig(def.history, def.label, def.color, def.unit, def.thresholds);
-      const existing = this.charts.get(def.id);
-      if (existing) {
-        existing.data = chartConfig.data;
-        existing.update("none");
-      } else {
-        this.charts.set(def.id, new Chart(canvas, chartConfig));
-      }
-    }
   }
 
   private updateDialSize(width: number): void {
@@ -822,9 +601,12 @@ private getSensorDefs() {
                 ${visibleDefs.map(def => html`
                   <div class="chart-wrapper">
                     <div class="chart-label">${def.label} ${t.history.chartSuffix}</div>
-                    <div class="chart-canvas-container">
-                      <canvas id="${def.canvasId}"></canvas>
-                    </div>
+                    <svg-line-chart
+                      .data=${def.history}
+                      .color=${def.color}
+                      .unit=${def.unit}
+                      .thresholds=${def.thresholds}
+                    ></svg-line-chart>
                   </div>
                 `)}
               </div>

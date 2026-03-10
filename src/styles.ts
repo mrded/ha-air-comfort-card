@@ -348,14 +348,8 @@ export const cardStyles = css`
     letter-spacing: 0.1em;
   }
 
-  .chart-canvas-container {
-    position: relative;
-    height: 120px;
+  svg-line-chart {
+    display: block;
     width: 100%;
-  }
-
-  .chart-canvas-container canvas {
-    width: 100% !important;
-    height: 100% !important;
   }
 `;
