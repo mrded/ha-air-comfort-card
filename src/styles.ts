@@ -153,7 +153,7 @@ export const cardStyles = css`
     width: 70%;
     height: 70%;
     border-radius: 50%;
-    border: 2px solid var(--divider-color, rgba(255, 255, 255, 0.2));
+    border: 2px solid var(--secondary-text-color, rgba(128, 128, 128, 0.5));
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
