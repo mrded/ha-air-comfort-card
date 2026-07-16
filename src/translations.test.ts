@@ -18,6 +18,18 @@ describe('getTranslations', () => {
     expect(getTranslations('DE').card.title).toBe('Luftkomfort');
   });
 
+  it('returns Italian for "it"', () => {
+    expect(getTranslations('it').card.title).toBe("Comfort dell'aria");
+  });
+
+  it('normalises language tags — "it-IT" falls back to Italian', () => {
+    expect(getTranslations('it-IT').card.title).toBe("Comfort dell'aria");
+  });
+
+  it('normalises case — "IT" resolves to Italian', () => {
+    expect(getTranslations('IT').card.title).toBe("Comfort dell'aria");
+  });
+
   it('falls back to English for unsupported languages', () => {
     expect(getTranslations('fr').card.title).toBe('Air Comfort');
   });
@@ -42,6 +54,14 @@ describe('getTranslations', () => {
     }
   });
 
+  it('Italian status keys cover all comfort zone outputs', () => {
+    const statusKeys = ['PLEASANT', 'COLD', 'HOT', 'DRY', 'HUMID', 'COLD & DRY', 'COLD & HUMID', 'HOT & DRY', 'HOT & HUMID'];
+    const t = getTranslations('it');
+    for (const key of statusKeys) {
+      expect(t.status[key]).toBeTruthy();
+    }
+  });
+
   it('English air quality keys cover all levels', () => {
     const t = getTranslations('en');
     expect(t.airQuality['good']).toBeTruthy();
@@ -51,6 +71,13 @@ describe('getTranslations', () => {
 
   it('German air quality keys cover all levels', () => {
     const t = getTranslations('de');
+    expect(t.airQuality['good']).toBeTruthy();
+    expect(t.airQuality['moderate']).toBeTruthy();
+    expect(t.airQuality['poor']).toBeTruthy();
+  });
+
+  it('Italian air quality keys cover all levels', () => {
+    const t = getTranslations('it');
     expect(t.airQuality['good']).toBeTruthy();
     expect(t.airQuality['moderate']).toBeTruthy();
     expect(t.airQuality['poor']).toBeTruthy();
