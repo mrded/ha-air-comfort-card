@@ -182,6 +182,7 @@ import { fr } from './fr';
 // …
 const TRANSLATIONS: Record<string, Translations> = { en, de, fr };
 ```
+4. Add the language in line 4 in src/translations/translations.test.ts
 
 That's it — no other files need to change.
 

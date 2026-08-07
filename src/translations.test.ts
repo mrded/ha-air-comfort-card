@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import { getTranslations } from './translations';
 
+const languages = ['en', 'de', 'nl', 'fr'] as const;
+
 describe('getTranslations', () => {
   it('returns English for "en"', () => {
     expect(getTranslations('en').card.title).toBe('Air Comfort');
@@ -35,7 +37,6 @@ describe('getTranslations', () => {
   });
 
   describe('translations', () => {
-    const languages = ['en', 'de', 'nl', 'fr'] as const;
 
     const statusKeys = [
       'PLEASANT',
