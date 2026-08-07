@@ -162,10 +162,12 @@ The card UI (status labels, dial labels, reading names, chart headings, and edit
 
 **Supported languages:**
 
-| Code | Language |
-|------|----------|
-| `en` | English (default) |
-| `de` | German / Deutsch |
+| Code | Language           |
+|------|--------------------|
+| `en` | English (default)  |
+| `de` | German / Deutsch   |
+| `fr` | French / Français  |
+| `nl` | Dutch / Nederlands |
 
 Unsupported languages fall back to English.
 
