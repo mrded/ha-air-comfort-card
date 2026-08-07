@@ -17,8 +17,8 @@ export const nl: Translations = {
         humidity: "Luchtvochtigheid",
     },
     history: {
-        show: "Toon laatste 24 uur",
-        hide: "Verberg laatste 24 uur",
+        show: "Toon afgelopen 24 uur",
+        hide: "Verberg afgelopen 24 uur",
         chartSuffix: "(24u)",
     },
     status: {
