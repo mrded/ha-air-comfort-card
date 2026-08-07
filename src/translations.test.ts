@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import { getTranslations } from './translations';
 
+const languages = ['en', 'de', 'nl', 'fr'] as const;
+
 describe('getTranslations', () => {
   it('returns English for "en"', () => {
     expect(getTranslations('en').card.title).toBe('Air Comfort');
@@ -8,6 +10,14 @@ describe('getTranslations', () => {
 
   it('returns German for "de"', () => {
     expect(getTranslations('de').card.title).toBe('Luftkomfort');
+  });
+
+  it('returns English for "nl"', () => {
+    expect(getTranslations('nl').card.title).toBe('Luchtcomfort');
+  });
+
+  it('returns French for "fr"', () => {
+    expect(getTranslations('fr').card.title).toBe('Confort de l\'air');
   });
 
   it('normalises language tags — "de-DE" falls back to German', () => {
@@ -19,40 +29,49 @@ describe('getTranslations', () => {
   });
 
   it('falls back to English for unsupported languages', () => {
-    expect(getTranslations('fr').card.title).toBe('Air Comfort');
+    expect(getTranslations('xx').card.title).toBe('Air Comfort');
   });
 
   it('falls back to English when lang is undefined', () => {
     expect(getTranslations(undefined).card.title).toBe('Air Comfort');
   });
 
-  it('English status keys cover all comfort zone outputs', () => {
-    const statusKeys = ['PLEASANT', 'COLD', 'HOT', 'DRY', 'HUMID', 'COLD & DRY', 'COLD & HUMID', 'HOT & DRY', 'HOT & HUMID'];
-    const t = getTranslations('en');
-    for (const key of statusKeys) {
-      expect(t.status[key]).toBeTruthy();
-    }
-  });
+  describe('translations', () => {
 
-  it('German status keys cover all comfort zone outputs', () => {
-    const statusKeys = ['PLEASANT', 'COLD', 'HOT', 'DRY', 'HUMID', 'COLD & DRY', 'COLD & HUMID', 'HOT & DRY', 'HOT & HUMID'];
-    const t = getTranslations('de');
-    for (const key of statusKeys) {
-      expect(t.status[key]).toBeTruthy();
-    }
-  });
+    const statusKeys = [
+      'PLEASANT',
+      'COLD',
+      'HOT',
+      'DRY',
+      'HUMID',
+      'COLD & DRY',
+      'COLD & HUMID',
+      'HOT & DRY',
+      'HOT & HUMID',
+    ];
 
-  it('English air quality keys cover all levels', () => {
-    const t = getTranslations('en');
-    expect(t.airQuality['good']).toBeTruthy();
-    expect(t.airQuality['moderate']).toBeTruthy();
-    expect(t.airQuality['poor']).toBeTruthy();
-  });
+    const airQualityKeys = [
+      'good',
+      'moderate',
+      'poor',
+    ];
 
-  it('German air quality keys cover all levels', () => {
-    const t = getTranslations('de');
-    expect(t.airQuality['good']).toBeTruthy();
-    expect(t.airQuality['moderate']).toBeTruthy();
-    expect(t.airQuality['poor']).toBeTruthy();
+    describe.each(languages)('%s', (language: string | undefined) => {
+      it('contains all comfort zone status keys', () => {
+        const t = getTranslations(language);
+
+        for (const key of statusKeys) {
+          expect(t.status[key]).toBeTruthy();
+        }
+      });
+
+      it('contains all air quality keys', () => {
+        const t = getTranslations(language);
+
+        for (const key of airQualityKeys) {
+          expect(t.airQuality[key]).toBeTruthy();
+        }
+      });
+    });
   });
 });
