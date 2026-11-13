@@ -1,7 +1,8 @@
 import { en, type Translations } from './en';
 import { de } from './de';
+import { ru } from './ru';
 
-const TRANSLATIONS: Record<string, Translations> = { en, de };
+const TRANSLATIONS: Record<string, Translations> = { en, de, ru };
 
 /**
  * Returns the translations for the given language code.
