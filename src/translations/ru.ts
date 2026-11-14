@@ -2,7 +2,7 @@ import type { Translations } from './en';
 
 export const ru: Translations = {
   card: {
-    title: "Комфорт воздуха",
+    title: "Микроклимат",
     entityNotFound: "Объект не найден",
     invalidSensorValues: "Некорректные значения датчика",
   },
