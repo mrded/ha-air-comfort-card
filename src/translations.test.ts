@@ -11,7 +11,7 @@ describe('getTranslations', () => {
   });
 
   it('returns Russian for "ru"', () => {
-    expect(getTranslations('ru').card.title).toBe('Комфорт воздуха');
+    expect(getTranslations('ru').card.title).toBe('Микроклимат');
   });
 
   it('normalises language tags — "de-DE" falls back to German', () => {
@@ -19,7 +19,7 @@ describe('getTranslations', () => {
   });
 
   it('normalises language tags — "ru-RU" falls back to Russian', () => {
-    expect(getTranslations('ru-RU').card.title).toBe('Комфорт воздуха');
+    expect(getTranslations('ru-RU').card.title).toBe('Микроклимат');
   });
 
   it('normalises case — "DE" resolves to German', () => {
@@ -27,7 +27,7 @@ describe('getTranslations', () => {
   });
 
   it('normalises case — "RU" resolves to Russian', () => {
-    expect(getTranslations('RU').card.title).toBe('Комфорт воздуха');
+    expect(getTranslations('RU').card.title).toBe('Микроклимат');
   });
 
   it('falls back to English for unsupported languages', () => {
